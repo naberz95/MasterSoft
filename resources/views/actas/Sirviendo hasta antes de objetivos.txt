@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Acta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+    <style>
+        table th, table td { border: 1px solid #ccc; padding: 6px; }
+        .section-title { background-color: #d0e9f7; font-weight: bold; text-align: center; padding: 6px; margin-top: 1.5rem; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    @if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+    <form method="POST" action="{{ route('actas.store') }}">
+        @csrf
+
+        <!-- ENCABEZADO -->
+        <table class="table text-center mb-4">
+            <tr>
+                <td style="width: 33%;">
+                    <img src="{{ asset('prueba1.png') }}" style="max-height: 70px;">
+                </td>
+                <td style="width: 34%; font-weight: bold; font-size: 22px;">ACTA</td>
+                <td style="width: 33%;">
+                    <img id="logo-cliente"
+                     src="{{ asset('storage/logos/' . ($clientePorDefecto->logo_cliente ?? 'logo-placeholder.png')) }}"
+                     alt="Logo Cliente" style="max-height: 70px;">
+                </td>
+            </tr>
+            <tr class="small">
+                <td>CÓDIGO: FRMGP010</td>
+                <td>VIGENTE DESDE: 7/Dic/2023</td>
+                <td>VERSIÓN: 6</td>
+            </tr>
+        </table>
+
+        <!-- NAV TABS -->
+        <ul class="nav nav-tabs" id="actaTabs" role="tablist">
+            @php
+                $tabs = ['datos' => 'Datos Básicos', 'asistentes' => 'Asistentes', 'tab-objetivo' => 'Objetivo / Agenda', 'tab-desarrollo' => 'Desarrollo y Conclusiones', 'compromisos' => 'Compromisos', 'resumen' => 'Resumen Cronológico', 'versiones' => 'Control de Versiones', 'revision' => 'Control de Revisión y Firma'];
+            @endphp
+            @foreach($tabs as $id => $label)
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $id }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $id }}" type="button" role="tab">{{ $label }}</button>
+                </li>
+            @endforeach
+        </ul>
+
+        <!-- TAB CONTENT -->
+        <div class="tab-content border p-3" id="actaTabContent">
+
+            <!-- DATOS BÁSICOS -->
+            <div class="tab-pane fade show active" id="datos" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="tipo_id" class="form-label">Tipo</label>
+                        <select id="tipo_id" name="tipo_id" class="form-select" required>
+                            @foreach($tipos as $tipo)
+                                <option value="{{ $tipo->id }}">{{ $tipo->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="numero" class="form-label">Número</label>
+                        <input id="numero" type="text" class="form-control" name="numero" value="{{ $numeroAutomatico }}" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fecha" class="form-label">Fecha</label>
+                        <input id="fecha" type="date" class="form-control" name="fecha" value="{{ date('Y-m-d') }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label  for ="hora_inicio"class="form-label">Hora Inicio</label>
+                        <input id="hora_inicio" type="time" name="hora_inicio" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label  for ="hora_fin"class="form-label">Hora Fin</label>
+                        <input id="hora_fin" type="time" name="hora_fin" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="lugar" class="form-label">Lugar</label>
+                        <input id="lugar" type="text" name="lugar" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="ciudad_id" class="form-label">Ciudad / País</label>
+                        <select id="ciudad_id" name="ciudad_id" class="form-select" required>
+                            @foreach($ciudades as $ciudad)
+                                <option value="{{ $ciudad->id }}">{{ $ciudad->nombre }} / {{ $ciudad->pais->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="cliente_id" class="form-label">Cliente</label>
+                        <div class="d-flex">
+                            <select name="cliente_id" id="cliente_id" class="form-select" required onchange="updateLogoCliente(this.value)">
+                        <option value="">Seleccione un cliente</option>
+                        @foreach ($clientes as $cliente)
+                            <option value="{{ $cliente->id }}" data-logo="{{ asset('storage/logos/' . $cliente->logo_cliente) }}" {{ (old('cliente_id', $clientePorDefecto->id ?? '') == $cliente->id) ? 'selected' : '' }}>
+                                {{ $cliente->nombre }} – Nit: {{ $cliente->nit }}
+                            </option>
+                        @endforeach
+                        </select>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#modalCrearCliente" title="Agregar cliente">➕</button>
+                        </div>  
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="facturable" class="form-label">Facturable</label>
+                        <select id="facturable" name="facturable" class="form-select" required>
+                            <option value="1">Sí</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label for="proyecto_id" class="form-label">Proyecto</label>
+                        <select id="proyecto_id" name="proyecto_id" class="form-select" required>
+                            @foreach($proyectos as $proyecto)
+                                <option value="{{ $proyecto->id }}">{{ $proyecto->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ASISTENTES -->
+            <div class="tab-pane fade" id="asistentes" role="tabpanel">
+                <table class="table table-bordered" id="asistentes-table">
+                    <thead><tr><th>Inicial</th><th>Nombre</th><th>Cargo</th><th>Empresa</th><th>¿Asiste?</th><th></th></tr></thead>
+                    <tbody id="asistentes-body">
+                        <tr>
+                            <td><input type="text" name="asistentes[0][iniciales]" class="form-control"></td>
+                            <td>
+                                <select name="asistentes[0][persona_id]" class="form-select persona-select" required>
+                                    <option value="">Seleccione</option>
+                                    @foreach ($personas as $persona)
+                                        <option
+                                            value="{{ $persona->id }}"
+                                            data-iniciales="{{ $persona->iniciales }}"
+                                            data-cargo="{{ $persona->cargo }}"
+                                            data-empresa="{{ $persona->empresa?->id }}"
+                                        >
+                                            {{ $persona->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                            </td>
+                            <td><input type="text" name="asistentes[0][cargo]" class="form-control"></td>
+                            <td>
+                                <select name="asistentes[0][empresa_id]" class="form-select">
+                                    @foreach($empresas as $e)
+                                        <option value="{{ $e->id }}">{{ $e->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td class="text-center"><input type="checkbox" name="asistentes[0][asistio]" value="1" checked></td>
+                            <td><button type="button" class="btn btn-danger btn-sm remove-row">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm btn-primary" id="add-asistente">➕ Agregar Asistente</button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPersona" title="Agregar Persona">➕ Agregar Persona</button>
+            </div>
+
+            <!-- OBJETIVO / AGENDA -->
+            <div class="tab-pane fade" id="tab-objetivo" role="tabpanel">
+                <table class="table table-bordered" style="font-size: 14px;">
+                    <thead>
+                        <tr class="table-primary text-center">
+                            <th colspan="2">OBJETIVO / ASUNTO / AGENDA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="width: 25%;"><strong>0. Asistencia:</strong></td>
+                            <td>Validado en tabla asistentes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>1. Desarrollo de la reunión</strong></td>
+                            <td>
+                                <textarea id="objetivo" name="objetivo" class="form-control" rows="4" placeholder="Ej: • Presentar informe para certificación&#10;• Entrega de certificado"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. Programación de actividades</strong></td>
+                            <td>
+                                <textarea id="agenda" name="agenda" class="form-control" rows="2" placeholder="Ej: N/A o describa la actividad..."></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. ¿Se define próxima reunión?</strong></td>
+                            <td>
+                                <select name="define_proxima_reunion" id="define_proxima_reunion" class="form-select">
+                                    <option value="no" selected>No</option>
+                                    <option value="si">Sí</option>
+                                </select>
+
+                                <div id="fecha_proxima_reunion_container" class="mt-2" style="display: none;">
+                                    <input type="date" name="proxima_reunion" class="form-control" placeholder="Fecha estimada">
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!-- DESARROLLO Y CONCLUSIONES -->
+            <div class="tab-pane fade" id="tab-desarrollo" role="tabpanel">
+                <label for="desarrollo" class="form-label">Desarrollo de la reunión</label>
+                <textarea id="desarrollo" name="desarrollo" class="form-control mb-3" rows="5" placeholder="Desarrollo de la reunión..."></textarea>
+
+                <label for="conclusiones" class="form-label">Conclusiones</label>
+                <textarea id="conclusiones" name="conclusiones" class="form-control" rows="4" placeholder="Conclusiones..."></textarea>
+            </div>
+
+
+            <!-- COMPROMISOS -->
+            <div class="tab-pane fade" id="compromisos" role="tabpanel">
+                <table class="table table-bordered" id="compromisos-table">
+                    <thead><tr><th>#</th><th>Descripción</th><th>Responsable</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><input name="compromisos[0][descripcion]" class="form-control"></td>
+                            <td>
+                                <select name="compromisos[0][responsable]" class="form-control compromiso-responsable">
+                                    <option value="">Seleccione</option>
+                                    <!-- opciones se llenan por JS -->
+                                </select>
+                            </td>
+                            <td><input name="compromisos[0][fecha]" type="date" class="form-control"></td>
+                            <td>
+                                <select name="compromisos[0][estado]" class="form-control">
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En proceso">En proceso</option>
+                                    <option value="Cumplido">Cumplido</option>
+                                </select>
+                            </td>
+                            <td><button type="button" class="btn btn-sm btn-danger remove-row">X</button></td>
+                        </tr>
+                    </tbody>
+
+                </table>
+                <button type="button" class="btn btn-sm btn-primary" id="add-compromiso">+ Agregar Compromiso</button>
+            </div>
+
+            <!-- RESUMEN CRONOLÓGICO -->
+            <div class="tab-pane fade" id="resumen" role="tabpanel">
+                <table class="table table-bordered" id="resumen-table">
+                    <thead><tr><th>Fecha</th><th>Descripción</th><th>Horas</th><th>Facturable</th><th></th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><input name="resumen[0][fecha]" type="date" class="form-control"></td>
+                            <td><input name="resumen[0][descripcion]" class="form-control"></td>
+                            <td><input name="resumen[0][horas]" type="number" class="form-control"></td>
+                            <td class="text-center"><input type="checkbox" name="resumen[0][facturable]" value="1" checked></td>
+                            <td><button type="button" class="btn btn-sm btn-danger remove-row">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm btn-primary" id="add-resumen">+ Agregar Registro</button>
+            </div>
+
+            <!-- CONTROL DE VERSIONES -->
+            <div class="tab-pane fade" id="versiones" role="tabpanel">
+                <p>Esta información es gestionada por el sistema y no editable.</p>
+            </div>
+
+            <!-- CONTROL DE REVISIÓN Y FIRMAS -->
+            <div class="tab-pane fade" id="revision" role="tabpanel">
+                <div class="mb-3">
+                    <label for="firmante_cliente_id" >Firmante Cliente</label>
+                    <select id="firmante_cliente_id" name="firmante_cliente_id" class="form-select">
+                        @foreach($personas as $p)
+                            <option value="{{ $p->id }}">{{ $p->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="firmante_gp_id">Firmante GP</label>
+                    <select id="firmante_gp_id" name="firmante_gp_id" class="form-select">
+                        @foreach($personas as $p)
+                            <option value="{{ $p->id }}">{{ $p->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Guardar Acta</button>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const logoPlaceholder = "{{ asset('images/logo-placeholder.png') }}";
+
+            // 🔁 Actualizar logo al cambiar cliente
+        const selectCliente = document.getElementById("cliente_id");
+        if (selectCliente) updateLogoCliente(selectCliente.value);
+
+        function updateLogoCliente(clienteId) {
+            const select = document.getElementById("cliente_id");
+            const logoImg = document.getElementById("logo-cliente");
+            if (!logoImg || !select) return;
+
+            const selectedOption = select.options[select.selectedIndex];
+            const logoUrl = selectedOption?.getAttribute("data-logo") || logoPlaceholder;
+            logoImg.src = logoUrl;
+        }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const editorFields = ['objetivo', 'agenda', 'desarrollo', 'conclusiones'];
+
+    function initEditor(id) {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('ck-editor__editable') && !el.closest('.ck-editor')) {
+            ClassicEditor
+                .create(el, {
+                    ckfinder: {
+                        uploadUrl: "{{ route('ckeditor.upload') }}?_token={{ csrf_token() }}"
+                    }
+                })
+                .catch(error => console.error(error));
+        }
+    }
+
+    editorFields.forEach(id => initEditor(id));
+
+    // Activar CKEditor al mostrar pestaña
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (e) {
+            const target = e.target.getAttribute('data-bs-target')?.replace('#', '');
+            if (editorFields.includes(target)) {
+                setTimeout(() => initEditor(target), 100);
+            }
+    });
+
+    // Mostrar/ocultar fecha próxima reunión
+    const selectDefineFecha = document.getElementById('define_proxima_reunion');
+    const fechaContainer = document.getElementById('fecha_proxima_reunion_container');
+    if (selectDefineFecha && fechaContainer) {
+        function toggleFecha() {
+            fechaContainer.style.display = selectDefineFecha.value === 'si' ? 'block' : 'none';
+        }
+        selectDefineFecha.addEventListener('change', toggleFecha);
+        toggleFecha(); // ejecutar al cargar
+    }
+});
+
+
+
+
+
+        // ➕ Asistentes
+        document.getElementById("add-asistente")?.addEventListener("click", function () {
+            const tableBody = document.getElementById("asistentes-body");
+            const index = tableBody.rows.length;
+            const row = tableBody.rows[0].cloneNode(true);
+
+            [...row.querySelectorAll("input, select")].forEach(el => {
+                el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+                if (el.type === "checkbox") el.checked = true;
+                else if (el.tagName === "SELECT") el.selectedIndex = 0;
+                else el.value = "";
+            });
+
+            tableBody.appendChild(row);
+        });
+
+        // ➕ Compromisos
+        document.getElementById("add-compromiso")?.addEventListener("click", function () {
+            const tableBody = document.querySelector("#compromisos-table tbody");
+            const index = tableBody.rows.length;
+            const row = tableBody.rows[0].cloneNode(true);
+
+            [...row.querySelectorAll("input")].forEach(el => {
+                el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+                el.value = "";
+            });
+
+            row.querySelector("td:first-child").textContent = index + 1;
+            tableBody.appendChild(row);
+
+            actualizarSelectsDeResponsables();
+
+        });
+
+        // ➕ Resumen cronológico
+        document.getElementById("add-resumen")?.addEventListener("click", function () {
+            const tableBody = document.querySelector("#resumen-table tbody");
+            const index = tableBody.rows.length;
+            const row = tableBody.rows[0].cloneNode(true);
+
+            [...row.querySelectorAll("input")].forEach(el => {
+                el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+                if (el.type === "checkbox") el.checked = true;
+                else el.value = "";
+            });
+
+            tableBody.appendChild(row);
+        });
+
+        // ❌ Eliminar fila dinámica
+        document.body.addEventListener("click", function (e) {
+            if (e.target.classList.contains("remove-row")) {
+                const row = e.target.closest("tr");
+                const tableBody = row.parentNode;
+                if (tableBody.rows.length > 1) row.remove();
+            }
+        });
+
+        // 📤 Crear cliente
+        const formCrearCliente = document.getElementById('formCrearCliente');
+        if (formCrearCliente) {
+            formCrearCliente.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(formCrearCliente);
+                const url = "{{ route('clientes.store') }}";
+                const errorDiv = document.getElementById('errorCrearCliente');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw response;
+                    return response.json();
+                })
+                .then(data => {
+                    const modalElement = document.getElementById('modalCrearCliente');
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                    modal.hide();
+
+                    formCrearCliente.reset();
+                    errorDiv.innerText = '';
+
+                    const select = document.getElementById('cliente_id');
+                    const option = document.createElement('option');
+                    option.value = data.id;
+                    option.text = `${data.nombre} – Nit: ${data.nit}`;
+                    option.setAttribute('data-logo', data.logo_url);
+                    option.selected = true;
+                    select.appendChild(option);
+
+                    updateLogoCliente(data.id);
+                })
+                .catch(async err => {
+                    let errorText = 'Error al crear cliente.';
+                    if (err.json) {
+                        const errJson = await err.json();
+                        if (errJson.errors) {
+                            errorText = Object.values(errJson.errors).flat().join('; ');
+                        }
+                    }
+                    errorDiv.innerText = errorText;
+                });
+            });
+        }
+
+        // 📤 Crear persona
+        const formCrearPersona = document.getElementById('formCrearPersona');
+        if (formCrearPersona) {
+            formCrearPersona.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(formCrearPersona);
+                const url = "{{ route('personas.store') }}";
+                const errorDiv = document.getElementById('errorCrearPersona');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw response;
+                    return response.json();
+                })
+                .then(data => {
+                    const modalElement = document.getElementById('modalCrearPersona');
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                    modal.hide();
+
+                    formCrearPersona.reset();
+                    errorDiv.innerText = '';
+
+                    document.querySelectorAll('.persona-select').forEach(select => {
+                        const option = document.createElement('option');
+                        option.value = data.id;
+                        option.text = data.nombre;
+                        option.setAttribute('data-iniciales', data.iniciales || '');
+                        option.setAttribute('data-cargo', data.cargo || '');
+                        option.setAttribute('data-empresa', data.empresa_id || '');
+                        option.selected = true;
+                        select.appendChild(option);
+
+                        const event = new Event('change', { bubbles: true });
+                        select.dispatchEvent(event);
+                    });
+                })
+                .catch(async err => {
+                    let errorText = 'Error al crear persona.';
+                    if (err.json) {
+                        const errJson = await err.json();
+                        if (errJson.errors) {
+                            errorText = Object.values(errJson.errors).flat().join('; ');
+                        }
+                    }
+                    errorDiv.innerText = errorText;
+                });
+            });
+        }
+
+        // 🔁 Completar campos automáticamente al seleccionar persona
+        document.body.addEventListener('change', function (e) {
+            if (e.target.classList.contains('persona-select')) {
+                const selectedOption = e.target.selectedOptions[0];
+                const row = e.target.closest('tr');
+
+                row.querySelector('input[name$="[iniciales]"]').value = selectedOption.dataset.iniciales || '';
+                row.querySelector('input[name$="[cargo]"]').value = selectedOption.dataset.cargo || '';
+                row.querySelector('select[name$="[empresa_id]"]').value = selectedOption.dataset.empresa || '';
+
+                actualizarSelectsDeResponsables();
+            }
+
+
+        });
+
+        // Función para obtener los asistentes actuales
+        function getAsistentesNombres() {
+            const selects = document.querySelectorAll('.persona-select');
+            return Array.from(selects).map(select => {
+                const option = select.selectedOptions[0];
+                return option ? {
+                    value: select.value,
+                    label: option.textContent.trim()
+                } : null;
+            }).filter(Boolean);
+        }
+
+        // Función para actualizar todos los selects de responsables
+        function actualizarSelectsDeResponsables() {
+            const asistentes = getAsistentesNombres();
+            const selects = document.querySelectorAll('.compromiso-responsable');
+
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Seleccione</option>';
+                asistentes.forEach(asistente => {
+                    const option = document.createElement('option');
+                    option.value = asistente.value;
+                    option.textContent = asistente.label;
+                    if (currentValue === asistente.value) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            });
+        }
+
+
+    });
+</script>
+
+
+<!-- Modal para crear cliente -->
+<div class="modal fade" id="modalCrearCliente" tabindex="-1" aria-labelledby="modalCrearClienteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formCrearCliente" enctype="multipart/form-data">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCrearClienteLabel">Crear Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="nit" class="form-label">NIT</label>
+            <input type="text" name="nit" id="nit" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="digito_verificacion" class="form-label">Dígito Verificación</label>
+            <input type="text" name="digito_verificacion" id="digito_verificacion" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="nombre_cliente" class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="nombre_cliente" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="direccion_cliente" class="form-label">Dirección</label>
+            <input type="text" name="direccion" id="direccion_cliente" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="logo_cliente" class="form-label">Logo</label>
+            <input type="file" name="logo_cliente" id="logo_cliente" class="form-control" accept="image/*">
+          </div>
+          <div id="errorCrearCliente" class="text-danger"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Modal para crear persona -->
+<div class="modal fade" id="modalCrearPersona" tabindex="-1" aria-labelledby="modalCrearPersonaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formCrearPersona">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCrearPersonaLabel">Crear Persona</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="nombre_persona" class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="nombre_persona" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="iniciales_persona" class="form-label">Iniciales</label>
+            <input type="text" name="iniciales" id="iniciales_persona" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="cargo_persona" class="form-label">Cargo</label>
+            <input type="text" name="cargo" id="cargo_persona" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="empresa_id_persona" class="form-label">Empresa</label>
+            <select name="empresa_id" id="empresa_id_persona" class="form-select" required>
+              <option value="">Seleccione una empresa</option>
+              @foreach($empresas as $empresa)
+                <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div id="errorCrearPersona" class="text-danger small mt-2"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Guardar Persona</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
