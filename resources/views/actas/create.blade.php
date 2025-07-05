@@ -699,36 +699,58 @@
     </div>
 </div>
 
-<!-- Modal para crear Persona -->
+<!-- Modal para crear Persona - VERSIÓN COMPLETA CORREGIDA -->
 <div class="modal fade" id="modalCrearPersona" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="formCrearPersona" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Crear Nueva Persona</h5>
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus"></i> Crear Nueva Persona
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Campos básicos -->
+                    <!-- INFORMACIÓN BÁSICA -->
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="nombre_persona" class="form-label">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" name="nombre" id="nombre_persona" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="iniciales_persona" class="form-label">Iniciales</label>
-                            <input type="text" name="iniciales" id="iniciales_persona" class="form-control">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-user"></i> Información Personal
+                            </h6>
+                            <hr>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="cargo_persona" class="form-label">Cargo</label>
-                            <input type="text" name="cargo" id="cargo_persona" class="form-control">
+                            <label for="nombre_persona" class="form-label">
+                                <i class="fas fa-user"></i> Nombre Completo <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="nombre" id="nombre_persona" class="form-control" required
+                                   placeholder="Nombre completo de la persona">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="empresa_id_persona" class="form-label">Empresa <span class="text-danger">*</span></label>
+                            <label for="iniciales_persona" class="form-label">
+                                <i class="fas fa-id-badge"></i> Iniciales
+                            </label>
+                            <input type="text" name="iniciales" id="iniciales_persona" class="form-control"
+                                   placeholder="Ej: JPS" maxlength="10">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cargo_persona" class="form-label">
+                                <i class="fas fa-briefcase"></i> Cargo
+                            </label>
+                            <input type="text" name="cargo" id="cargo_persona" class="form-control"
+                                   placeholder="Cargo o posición">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="empresa_id_persona" class="form-label">
+                                <i class="fas fa-building"></i> Empresa <span class="text-danger">*</span>
+                            </label>
                             <select name="empresa_id" id="empresa_id_persona" class="form-select" required>
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($empresas as $empresa)
@@ -738,71 +760,121 @@
                         </div>
                     </div>
 
-                    <!-- SELECCIÓN DEL MÉTODO DE FIRMA -->
-                    <div class="mb-3">
-                        <label class="form-label">¿Cómo desea agregar la firma?</label>
-                        <select class="form-select" id="metodo-firma" onchange="toggleFirmaMethod()">
-                            <option value="">Seleccione una opción</option>
-                            <option value="archivo">Subir imagen</option>
-                            <option value="dibujar">Dibujar firma</option>
-                        </select>
-                    </div>
-
-                    <!-- FIRMA: SUBIR ARCHIVO -->
-                    <div class="mb-3" id="firma-archivo-container" style="display: none;">
-                        <label class="form-label">Firma (subir imagen)</label>
-                        <input type="file" name="firma" id="firma" class="form-control" accept="image/*">
-                    </div>
-
-                    <!-- FIRMA: DIBUJAR CON SIGNATURE PAD -->
-                    <div class="mb-3" id="firma-dibujar-container" style="display: none;">
-                        <label class="form-label">Firma (dibujar)</label>
-                        <canvas id="signature-canvas" width="400" height="150" style="border: 1px solid #ccc; width: 100%;"></canvas>
-
-                        <div class="mt-2 d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSignature()">🧽 Limpiar</button>
-                            <button type="button" class="btn btn-sm btn-success" disabled id="btnEstadoFirma">✍️ Firma pendiente</button>
-                        </div>
-
-                        <input type="hidden" name="firma_base64" id="firma_base64">
-
-                        <div class="form-text mt-2">
-                            📝 Al firmar con trazo digital, acepto que esta firma tiene validez como representación de mi aprobación del contenido del acta.
-                        </div>
-                    </div>
-
-                    <!-- Campos adicionales -->
+                    <!-- INFORMACIÓN DE IDENTIFICACIÓN -->
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="tarjeta_profesional" class="form-label">Tarjeta Profesional</label>
-                            <input type="text" name="tarjeta_profesional" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="fecha_tarjeta" class="form-label">Fecha de expedición de la tarjeta</label>
-                            <input type="date" name="fecha_tarjeta" class="form-control">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-id-card"></i> Información de Identificación
+                            </h6>
+                            <hr>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="cedula" class="form-label">Cédula</label>
-                            <input type="text" name="cedula" class="form-control">
+                            <label for="cedula_persona" class="form-label">Cédula</label>
+                            <input type="text" name="cedula" id="cedula_persona" class="form-control"
+                                   placeholder="Número de cédula">
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="fecha_expedicion_cedula" class="form-label">Fecha expedición cédula</label>
-                            <input type="date" name="fecha_expedicion_cedula" class="form-control">
+                            <label for="fecha_expedicion_cedula_persona" class="form-label">Fecha Expedición</label>
+                            <input type="date" name="fecha_expedicion_cedula" id="fecha_expedicion_cedula_persona" class="form-control">
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="lugar_expedicion_cedula" class="form-label">Lugar expedición cédula</label>
-                            <input type="text" name="lugar_expedicion_cedula" class="form-control">
+                            <label for="lugar_expedicion_cedula_persona" class="form-label">Lugar Expedición</label>
+                            <input type="text" name="lugar_expedicion_cedula" id="lugar_expedicion_cedula_persona" class="form-control"
+                                   placeholder="Ciudad de expedición">
+                        </div>
+                    </div>
+
+                    <!-- INFORMACIÓN PROFESIONAL -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-graduation-cap"></i> Información Profesional
+                            </h6>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="tarjeta_profesional_persona" class="form-label">Tarjeta Profesional</label>
+                            <input type="text" name="tarjeta_profesional" id="tarjeta_profesional_persona" class="form-control"
+                                   placeholder="Número de tarjeta profesional">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_tarjeta_persona" class="form-label">Fecha de Expedición Tarjeta</label>
+                            <input type="date" name="fecha_tarjeta" id="fecha_tarjeta_persona" class="form-control">
+                        </div>
+                    </div>
+
+                    <!-- FIRMA DIGITAL -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-signature"></i> Firma Digital
+                            </h6>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <!-- Método de Firma -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">¿Cómo desea agregar la firma?</label>
+                            <select class="form-select" id="metodo-firma-persona" onchange="toggleFirmaMethodPersona()">
+                                <option value="">Seleccione una opción</option>
+                                <option value="archivo">Subir imagen de firma</option>
+                                <option value="dibujar">Dibujar firma digital</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Subida de Archivo -->
+                    <div class="row" id="firma-archivo-container-persona" style="display: none;">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Imagen de la Firma</label>
+                            <input type="file" name="firma" id="firma_persona" class="form-control" accept="image/*" onchange="previewFirmaPersona(event)">
+                            <div class="form-text">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 2MB.</div>
+                            <img id="firmaPreviewPersona" class="img-thumbnail mt-2" style="max-height: 150px; display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Canvas para Dibujar -->
+                    <div class="row" id="firma-canvas-container-persona" style="display: none;">
+                        <div class="col-md-12 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <label class="form-label">Dibuje su firma aquí:</label>
+                                    <canvas id="signature-canvas-persona" class="border" width="600" height="200"></canvas>
+                                    <br>
+                                    <div class="mt-2 d-flex gap-2 justify-content-center">
+                                        <button type="button" class="btn btn-sm btn-secondary" onclick="clearSignaturePersona()">
+                                            <i class="fas fa-eraser"></i> Limpiar
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success" disabled id="btnEstadoFirmaPersona">
+                                            ✍️ Firma pendiente
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="firma_base64" id="firma_base64_persona">
+                                    <div class="form-text mt-2">
+                                        📝 Al firmar con trazo digital, acepto que esta firma tiene validez como representación de mi aprobación.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div id="errorCrearPersona" class="text-danger small mt-2"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Persona</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Persona
+                    </button>
                 </div>
             </form>
         </div>
@@ -814,9 +886,10 @@
 
 <script>
 const logoPlaceholder = "{{ asset('images/logo-placeholder.png') }}";
-let signaturePad;
+let signaturePad; // Para el modal principal (si existe)
+let signaturePadPersona = null; // Para el modal de persona
 
-// ✅ FUNCIONES GLOBALES PARA RESPONSABLES (MOVIDAS FUERA DEL DOMContentLoaded)
+// ✅ FUNCIONES GLOBALES PARA RESPONSABLES
 function getAsistentesNombres() {
     return [...document.querySelectorAll('.persona-select')].map(select => {
         const selected = select.selectedOptions[0];
@@ -847,6 +920,8 @@ function actualizarSelectsDeResponsables() {
             select.appendChild(option);
         });
     });
+    
+    console.log('✅ Selects de responsables actualizados:', asistentes.length, 'asistentes');
 }
 
 // 🚀 FUNCIÓN PARA ACTUALIZAR LOGO EMPRESA
@@ -860,7 +935,7 @@ function updateLogoEmpresa(empresaId) {
     logoImg.src = logoUrl;
 }
 
-// 🖋️ FUNCIONES PARA SIGNATURE PAD
+// 🖋️ FUNCIONES PARA SIGNATURE PAD PRINCIPAL
 window.toggleFirmaMethod = () => {
     const metodo = document.getElementById("metodo-firma").value;
     document.getElementById("firma-archivo-container").style.display = metodo === "archivo" ? "block" : "none";
@@ -872,12 +947,81 @@ window.clearSignature = () => {
         signaturePad.clear();
         document.getElementById("firma_base64").value = "";
         const estadoBtn = document.getElementById("btnEstadoFirma");
-        estadoBtn.disabled = true;
-        estadoBtn.textContent = "✍️ Firma pendiente";
+        if (estadoBtn) {
+            estadoBtn.disabled = true;
+            estadoBtn.textContent = "✍️ Firma pendiente";
+        }
     }
 };
 
-// 🎯 FUNCIONES PARA MODALES - VERSIÓN MEJORADA
+// 🖋️ FUNCIONES ESPECÍFICAS PARA MODAL DE PERSONA
+window.toggleFirmaMethodPersona = () => {
+    const metodo = document.getElementById("metodo-firma-persona").value;
+    const archivoContainer = document.getElementById("firma-archivo-container-persona");
+    const canvasContainer = document.getElementById("firma-canvas-container-persona");
+    
+    // Ocultar ambos contenedores
+    archivoContainer.style.display = 'none';
+    canvasContainer.style.display = 'none';
+    
+    if (metodo === "archivo") {
+        archivoContainer.style.display = 'block';
+    } else if (metodo === "dibujar") {
+        canvasContainer.style.display = 'block';
+        initSignaturePadPersona();
+    }
+};
+
+function initSignaturePadPersona() {
+    if (signaturePadPersona) return;
+    
+    const canvas = document.getElementById('signature-canvas-persona');
+    if (canvas) {
+        signaturePadPersona = new SignaturePad(canvas, {
+            backgroundColor: 'rgba(255, 255, 255, 0)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+
+        signaturePadPersona.addEventListener('endStroke', () => {
+            document.getElementById('firma_base64_persona').value = signaturePadPersona.toDataURL();
+            const btn = document.getElementById("btnEstadoFirmaPersona");
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "✅ Firma registrada";
+            }
+        });
+    }
+}
+
+window.clearSignaturePersona = () => {
+    if (signaturePadPersona) {
+        signaturePadPersona.clear();
+        document.getElementById("firma_base64_persona").value = "";
+        const estadoBtn = document.getElementById("btnEstadoFirmaPersona");
+        if (estadoBtn) {
+            estadoBtn.disabled = true;
+            estadoBtn.textContent = "✍️ Firma pendiente";
+        }
+    }
+};
+
+function previewFirmaPersona(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('firmaPreviewPersona');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// 🎯 FUNCIONES PARA MODALES - VERSIÓN COMPLETA
 function configurarModales() {
     // Modal Tipo de Acta
     const formCrearTipoActa = document.getElementById('formCrearTipoActa');
@@ -1024,17 +1168,14 @@ function configurarModales() {
 
                 // ✅ FORZAR LIMPIEZA DEL BACKDROP
                 setTimeout(() => {
-                    // Remover cualquier backdrop persistente
                     document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
                         backdrop.remove();
                     });
                     
-                    // Restaurar body
                     document.body.classList.remove('modal-open');
                     document.body.style.paddingRight = '';
                     document.body.style.overflow = '';
 
-                    // Mostrar éxito
                     Swal.fire({
                         icon: 'success',
                         title: '¡Éxito!',
@@ -1065,14 +1206,13 @@ function configurarModales() {
                 });
                 
             } finally {
-                // Ocultar loading
                 submitBtn.disabled = false;
                 if (spinner) spinner.classList.add('d-none');
             }
         });
     }
 
-    // Modal Persona - VERSIÓN CORREGIDA CON LIMPIEZA DE BACKDROP
+    // Modal Persona - VERSIÓN CORREGIDA CON FIRMAS
     const formCrearPersona = document.getElementById('formCrearPersona');
     if (formCrearPersona) {
         formCrearPersona.addEventListener('submit', async function(e) {
@@ -1087,9 +1227,10 @@ function configurarModales() {
             submitBtn.disabled = true;
             errorDiv.innerText = '';
 
-            const metodo = document.getElementById("metodo-firma")?.value;
-            if (metodo === "dibujar" && signaturePad && !signaturePad.isEmpty()) {
-                document.getElementById("firma_base64").value = signaturePad.toDataURL("image/png");
+            // Preparar datos de firma para el modal de persona
+            const metodo = document.getElementById("metodo-firma-persona")?.value;
+            if (metodo === "dibujar" && signaturePadPersona && !signaturePadPersona.isEmpty()) {
+                document.getElementById("firma_base64_persona").value = signaturePadPersona.toDataURL("image/png");
             }
 
             const formData = new FormData(this);
@@ -1107,16 +1248,18 @@ function configurarModales() {
                 if (!response.ok) throw await response.json();
                 const data = await response.json();
 
-                // Actualizar selects
+                console.log('✅ Persona creada:', data);
+
+                // Actualizar selects de personas en asistentes
                 document.querySelectorAll('.persona-select').forEach(select => {
-                    const option = new Option(data.nombre, data.id, false, true);
+                    const option = new Option(data.nombre, data.id, false, false);
                     option.setAttribute('data-iniciales', data.iniciales || '');
                     option.setAttribute('data-cargo', data.cargo || '');
                     option.setAttribute('data-empresa', data.empresa_id || '');
                     select.appendChild(option);
-                    select.dispatchEvent(new Event('change', { bubbles: true }));
                 });
 
+                // Actualizar selects de firmantes
                 ['select_firmante_gp', 'select_firmante_empresa'].forEach(selectId => {
                     const select = document.getElementById(selectId);
                     if (select) {
@@ -1136,35 +1279,41 @@ function configurarModales() {
                 this.reset();
                 errorDiv.innerText = '';
 
-                // Limpiar signature pad si existe
-                if (signaturePad) {
-                    signaturePad.clear();
-                    const estadoBtn = document.getElementById("btnEstadoFirma");
+                // Limpiar signature pad específico del modal de persona
+                if (signaturePadPersona) {
+                    signaturePadPersona.clear();
+                    const estadoBtn = document.getElementById("btnEstadoFirmaPersona");
                     if (estadoBtn) {
                         estadoBtn.disabled = true;
                         estadoBtn.textContent = "✍️ Firma pendiente";
                     }
                 }
 
-                // ✅ AHORA SÍ PUEDE LLAMAR LA FUNCIÓN GLOBAL
-                actualizarSelectsDeResponsables();
+                // Ocultar contenedores de firma
+                document.getElementById("firma-archivo-container-persona").style.display = 'none';
+                document.getElementById("firma-canvas-container-persona").style.display = 'none';
+                document.getElementById("metodo-firma-persona").value = '';
+                
+                // Ocultar preview de firma
+                const preview = document.getElementById('firmaPreviewPersona');
+                if (preview) preview.style.display = 'none';
 
-                // ✅ CERRAR MODAL ANTES DEL SWEETALERT
+                // Actualizar selects de responsables
+                setTimeout(actualizarSelectsDeResponsables, 100);
+
+                // Cerrar modal
                 modal.hide();
 
                 // ✅ FORZAR LIMPIEZA DEL BACKDROP
                 setTimeout(() => {
-                    // Remover cualquier backdrop persistente
                     document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
                         backdrop.remove();
                     });
                     
-                    // Restaurar body
                     document.body.classList.remove('modal-open');
                     document.body.style.paddingRight = '';
                     document.body.style.overflow = '';
 
-                    // Mostrar éxito
                     Swal.fire({
                         icon: 'success',
                         title: '¡Éxito!',
@@ -1193,7 +1342,6 @@ function configurarModales() {
                 });
 
             } finally {
-                // Ocultar loading
                 submitBtn.disabled = false;
             }
         });
@@ -1266,36 +1414,59 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 👥 ASISTENTES
+    // 👥 ASISTENTES - VERSIÓN MEJORADA
     document.getElementById("add-asistente")?.addEventListener("click", () => {
         const tableBody = document.getElementById("asistentes-body");
+        if (!tableBody || tableBody.children.length === 0) {
+            console.error('No se puede agregar asistente: tabla no encontrada o vacía');
+            return;
+        }
+        
         const index = tableBody.rows.length;
-        const row = tableBody.rows[0].cloneNode(true);
+        const templateRow = tableBody.rows[0];
+        const row = templateRow.cloneNode(true);
 
+        // Actualizar nombres de campos
         [...row.querySelectorAll("input, select")].forEach(el => {
-            el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+            if (el.name) {
+                el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+            }
             if (el.type === "checkbox") el.checked = true;
             else if (el.tagName === "SELECT") el.selectedIndex = 0;
             else el.value = "";
         });
 
         tableBody.appendChild(row);
+        
+        // Configurar events para nueva fila
         const personaSelect = row.querySelector(".persona-select");
         if (personaSelect) {
-            personaSelect.addEventListener("change", actualizarSelectsDeResponsables);
-            personaSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            personaSelect.addEventListener("change", (e) => {
+                autoCompletarAsistente(e);
+                setTimeout(actualizarSelectsDeResponsables, 10);
+            });
         }
+        
         setTimeout(actualizarSelectsDeResponsables, 10);
+        console.log('✅ Asistente agregado, fila:', index + 1);
     });
 
-    // 📋 COMPROMISOS - CORREGIR FUNCIÓN
+    // 📋 COMPROMISOS - VERSIÓN MEJORADA
     document.getElementById("add-compromiso")?.addEventListener("click", () => {
         const tableBody = document.querySelector("#compromisos-table tbody");
+        if (!tableBody || tableBody.children.length === 0) {
+            console.error('No se puede agregar compromiso: tabla no encontrada o vacía');
+            return;
+        }
+        
         const index = tableBody.rows.length;
-        const row = tableBody.rows[0].cloneNode(true);
+        const templateRow = tableBody.rows[0];
+        const row = templateRow.cloneNode(true);
 
         [...row.querySelectorAll("input, select")].forEach(el => {
-            el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+            if (el.name) {
+                el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+            }
             if (el.type === "date") el.value = "";
             else if (el.tagName === "SELECT") el.selectedIndex = 0;
             else el.value = "";
@@ -1304,18 +1475,25 @@ document.addEventListener("DOMContentLoaded", () => {
         row.querySelector("td:first-child").textContent = index + 1;
         tableBody.appendChild(row);
         
-        // ✅ ACTUALIZAR SELECTS DE RESPONSABLES DESPUÉS DE AGREGAR
         setTimeout(actualizarSelectsDeResponsables, 10);
     });
 
     // ⏰ RESUMEN
     document.getElementById("add-resumen")?.addEventListener("click", () => {
         const tableBody = document.querySelector("#resumen-table tbody");
+        if (!tableBody || tableBody.children.length === 0) {
+            console.error('No se puede agregar resumen: tabla no encontrada o vacía');
+            return;
+        }
+        
         const index = tableBody.rows.length;
-        const row = tableBody.rows[0].cloneNode(true);
+        const templateRow = tableBody.rows[0];
+        const row = templateRow.cloneNode(true);
 
         [...row.querySelectorAll("input")].forEach(el => {
-            el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+            if (el.name) {
+                el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+            }
             if (el.type === "checkbox") el.checked = true;
             else el.value = "";
         });
@@ -1327,36 +1505,54 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.addEventListener("click", e => {
         if (e.target.classList.contains("remove-row")) {
             const row = e.target.closest("tr");
-            if (row.parentNode.rows.length > 1) row.remove();
-            if (e.target.closest("#compromisos-table")) actualizarSelectsDeResponsables();
+            if (row.parentNode.rows.length > 1) {
+                row.remove();
+                if (e.target.closest("#compromisos-table")) {
+                    actualizarSelectsDeResponsables();
+                }
+            }
         }
     });
 
     // 🏢 CONFIGURAR MODALES
     configurarModales();
 
-    // 🖋️ CONFIGURAR SIGNATURE PAD
+    // 🖋️ CONFIGURAR SIGNATURE PAD PRINCIPAL (si existe)
     const canvas = document.getElementById("signature-canvas");
     if (canvas) {
         signaturePad = new SignaturePad(canvas);
         signaturePad.onEnd = () => {
             const btn = document.getElementById("btnEstadoFirma");
-            btn.disabled = false;
-            btn.textContent = "✅ Firma registrada";
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "✅ Firma registrada";
+            }
         };
     }
 
     // 👤 Auto-completar campos de asistentes
+    function autoCompletarAsistente(event) {
+        const select = event.target;
+        const option = select.selectedOptions[0];
+        const row = select.closest('tr');
+        
+        if (row && option) {
+            const iniciales = row.querySelector('input[name$="[iniciales]"]');
+            const cargo = row.querySelector('input[name$="[cargo]"]');
+            const empresa = row.querySelector('select[name$="[empresa_id]"]');
+            
+            if (iniciales) iniciales.value = option.dataset.iniciales || '';
+            if (cargo) cargo.value = option.dataset.cargo || '';
+            if (empresa) empresa.value = option.dataset.empresa || '';
+            
+            console.log('✅ Auto-completado:', option.textContent.trim());
+        }
+    }
+
     document.body.addEventListener('change', e => {
         if (e.target.classList.contains('persona-select')) {
-            const option = e.target.selectedOptions[0];
-            const row = e.target.closest('tr');
-            if (row) {
-                row.querySelector('input[name$="[iniciales]"]').value = option.dataset.iniciales || '';
-                row.querySelector('input[name$="[cargo]"]').value = option.dataset.cargo || '';
-                row.querySelector('select[name$="[empresa_id]"]').value = option.dataset.empresa || '';
-            }
-            actualizarSelectsDeResponsables(); // ✅ Ahora funciona correctamente
+            autoCompletarAsistente(e);
+            setTimeout(actualizarSelectsDeResponsables, 50);
         }
     });
 
@@ -1367,8 +1563,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selectProyecto?.addEventListener('change', async function () {
         const proyectoId = this.value;
-        compromisosContainer.innerHTML = '';
-        resumenAnteriorContainer.innerHTML = '';
+        if (compromisosContainer) compromisosContainer.innerHTML = '';
+        if (resumenAnteriorContainer) resumenAnteriorContainer.innerHTML = '';
 
         if (!proyectoId) return;
 
@@ -1377,7 +1573,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const compromisosRes = await fetch(`/actas/${proyectoId}/ultima`);
             if (compromisosRes.ok) {
                 const compromisosData = await compromisosRes.json();
-                if (compromisosData?.compromisos?.length) {
+                if (compromisosData?.compromisos?.length && compromisosContainer) {
                     let html = `<div class="alert alert-info"><strong>Compromisos del acta anterior (Acta N° ${compromisosData.acta.numero})</strong></div>`;
                     html += `<table class="table table-bordered mb-4"><thead><tr><th>Descripción</th><th>Responsable</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>`;
                     compromisosData.compromisos.forEach((comp) => {
@@ -1397,7 +1593,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const resumenRes = await fetch(`/proyectos/${proyectoId}/resumen-cronologico`);
             if (resumenRes.ok) {
                 const resumenData = await resumenRes.json();
-                if (resumenData?.length) {
+                if (resumenData?.length && resumenAnteriorContainer) {
                     let html = `<div class="alert alert-secondary"><strong>Resumen cronológico de actas anteriores</strong></div>`;
                     html += `<table class="table table-sm table-bordered table-hover">
                                 <thead class="table-light">
@@ -1454,419 +1650,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ✅ INICIALIZAR SELECTS DE RESPONSABLES AL FINAL
-    setTimeout(actualizarSelectsDeResponsables, 100);
-});
-</script>
-<!-- filepath: resources/views/actas/create.blade.php -->
-<script>
-// 💾 AUTO-GUARDADO LOCAL
-class AutoGuardado {
-    constructor() {
-        this.storageKey = 'acta_draft_' + Date.now();
-        this.loadExistingDraft();
-        this.initAutoSave();
-        this.showDraftNotification();
-    }
-
-    // 🔍 BUSCAR BORRADORES EXISTENTES
-    loadExistingDraft() {
-        const drafts = this.getAllDrafts();
-        if (drafts.length > 0) {
-            // Usar el borrador más reciente
-            const latestDraft = drafts[0];
-            this.storageKey = latestDraft.key;
-            this.loadDraft(latestDraft.data);
-        }
-    }
-
-    // 📝 OBTENER TODOS LOS BORRADORES
-    getAllDrafts() {
-        const drafts = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('acta_draft_')) {
-                try {
-                    const data = JSON.parse(localStorage.getItem(key));
-                    drafts.push({
-                        key: key,
-                        data: data,
-                        timestamp: data.timestamp || 0
-                    });
-                } catch (e) {
-                    // Borrar datos corruptos
-                    localStorage.removeItem(key);
-                }
-            }
-        }
-        
-        // Ordenar por timestamp (más reciente primero)
-        return drafts.sort((a, b) => b.timestamp - a.timestamp);
-    }
-
-    // 💾 GUARDAR BORRADOR
-    saveDraft() {
-        const formData = this.getFormData();
-        formData.timestamp = Date.now();
-        formData.url = window.location.href;
-        
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(formData));
-            this.updateSaveIndicator('✅ Guardado automático');
-        } catch (e) {
-            console.warn('Error guardando borrador:', e);
-            this.updateSaveIndicator('⚠️ Error al guardar');
-        }
-    }
-
-    // 📋 RECOPILAR DATOS DEL FORMULARIO
-    getFormData() {
-        const form = document.getElementById('actaForm');
-        const data = {
-            // Datos básicos
-            tipo_id: form.tipo_id?.value || '',
-            fecha: form.fecha?.value || '',
-            hora_inicio: form.hora_inicio?.value || '',
-            hora_fin: form.hora_fin?.value || '',
-            lugar: form.lugar?.value || '',
-            ciudad_id: form.ciudad_id?.value || '',
-            empresa_id: form.empresa_id?.value || '',
-            facturable: form.facturable?.value || '',
-            proyecto_id: form.proyecto_id?.value || '',
-            
-            // Objetivo y agenda
-            objetivo: this.getEditorContent('objetivo'),
-            agenda: this.getEditorContent('agenda'),
-            desarrollo: this.getEditorContent('desarrollo'),
-            conclusiones: this.getEditorContent('conclusiones'),
-            
-            // Próxima reunión
-            define_proxima_reunion: form.define_proxima_reunion?.value || '',
-            proxima_reunion: form.proxima_reunion?.value || '',
-            
-            // Asistentes
-            asistentes: this.getTableData('asistentes-body', ['iniciales', 'persona_id', 'cargo', 'empresa_id', 'asistio']),
-            
-            // Compromisos
-            compromisos: this.getTableData('compromisos-table tbody', ['descripcion', 'persona_id', 'fecha', 'estado']),
-            
-            // Resumen
-            resumen: this.getTableData('resumen-table tbody', ['fecha', 'descripcion', 'horas', 'facturable']),
-            
-            // Firmas
-            firmante_gp_id: form.firmante_gp_id?.value || '',
-            firmante_empresa_id: form.firmante_empresa_id?.value || ''
-        };
-
-        return data;
-    }
-
-    // 📝 OBTENER CONTENIDO DE EDITORES CKEDITOR
-    getEditorContent(editorId) {
-        const element = document.getElementById(editorId);
-        if (!element) return '';
-        
-        // Si es CKEditor
-        if (window.CKEDITOR && CKEDITOR.instances[editorId]) {
-            return CKEDITOR.instances[editorId].getData();
-        }
-        
-        // Si es ClassicEditor (CKEditor 5)
-        if (element.classList.contains('ck-editor__editable')) {
-            return element.innerHTML;
-        }
-        
-        // Fallback a valor normal
-        return element.value || '';
-    }
-
-    // 📊 OBTENER DATOS DE TABLAS
-    getTableData(selector, fields) {
-        const tbody = document.querySelector(selector);
-        if (!tbody) return [];
-        
-        const data = [];
-        tbody.querySelectorAll('tr').forEach(row => {
-            const rowData = {};
-            fields.forEach(field => {
-                const input = row.querySelector(`[name*="[${field}]"]`);
-                if (input) {
-                    if (input.type === 'checkbox') {
-                        rowData[field] = input.checked;
-                    } else {
-                        rowData[field] = input.value || '';
-                    }
-                }
-            });
-            data.push(rowData);
-        });
-        
-        return data;
-    }
-
-    // 🔄 CARGAR BORRADOR
-    loadDraft(data) {
-        if (!data) return;
-        
-        try {
-            // Datos básicos
-            this.setFieldValue('tipo_id', data.tipo_id);
-            this.setFieldValue('fecha', data.fecha);
-            this.setFieldValue('hora_inicio', data.hora_inicio);
-            this.setFieldValue('hora_fin', data.hora_fin);
-            this.setFieldValue('lugar', data.lugar);
-            this.setFieldValue('ciudad_id', data.ciudad_id);
-            this.setFieldValue('empresa_id', data.empresa_id);
-            this.setFieldValue('facturable', data.facturable);
-            this.setFieldValue('proyecto_id', data.proyecto_id);
-            
-            // Próxima reunión
-            this.setFieldValue('define_proxima_reunion', data.define_proxima_reunion);
-            this.setFieldValue('proxima_reunion', data.proxima_reunion);
-            
-            // Firmas
-            this.setFieldValue('firmante_gp_id', data.firmante_gp_id);
-            this.setFieldValue('firmante_empresa_id', data.firmante_empresa_id);
-            
-            // Cargar tablas después de un delay para asegurar que el DOM esté listo
-            setTimeout(() => {
-                this.loadTableData('asistentes', data.asistentes);
-                this.loadTableData('compromisos', data.compromisos);
-                this.loadTableData('resumen', data.resumen);
-                
-                // Cargar editores después de otro delay
-                setTimeout(() => {
-                    this.setEditorContent('objetivo', data.objetivo);
-                    this.setEditorContent('agenda', data.agenda);
-                    this.setEditorContent('desarrollo', data.desarrollo);
-                    this.setEditorContent('conclusiones', data.conclusiones);
-                }, 500);
-            }, 300);
-            
-        } catch (e) {
-            console.error('Error cargando borrador:', e);
-        }
-    }
-
-    // 🔧 ESTABLECER VALOR DE CAMPO
-    setFieldValue(name, value) {
-        const field = document.querySelector(`[name="${name}"]`);
-        if (field && value) {
-            field.value = value;
-            field.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    }
-
-    // 📝 ESTABLECER CONTENIDO DE EDITOR
-    setEditorContent(editorId, content) {
-        if (!content) return;
-        
-        const element = document.getElementById(editorId);
-        if (!element) return;
-        
-        // Si es CKEditor 5 ClassicEditor
-        if (window.ClassicEditor) {
-            // Buscar la instancia del editor
-            const editorInstance = Array.from(document.querySelectorAll('.ck-editor')).find(el => 
-                el.querySelector(`#${editorId}`)
-            );
-            
-            if (editorInstance && editorInstance.ckeditorInstance) {
-                editorInstance.ckeditorInstance.setData(content);
-                return;
-            }
-        }
-        
-        // Fallback a textarea normal
-        element.value = content;
-    }
-
-    // 📊 CARGAR DATOS DE TABLA
-    loadTableData(tableType, data) {
-        if (!data || !Array.isArray(data)) return;
-        
-        let tbody, addButton, fields;
-        
-        switch (tableType) {
-            case 'asistentes':
-                tbody = document.getElementById('asistentes-body');
-                addButton = document.getElementById('add-asistente');
-                fields = ['iniciales', 'persona_id', 'cargo', 'empresa_id', 'asistio'];
-                break;
-            case 'compromisos':
-                tbody = document.querySelector('#compromisos-table tbody');
-                addButton = document.getElementById('add-compromiso');
-                fields = ['descripcion', 'persona_id', 'fecha', 'estado'];
-                break;
-            case 'resumen':
-                tbody = document.querySelector('#resumen-table tbody');
-                addButton = document.getElementById('add-resumen');
-                fields = ['fecha', 'descripcion', 'horas', 'facturable'];
-                break;
-        }
-        
-        if (!tbody || !addButton) return;
-        
-        // Limpiar tabla existente
-        tbody.innerHTML = '';
-        
-        // Agregar filas con datos
-        data.forEach((rowData, index) => {
-            if (index === 0 && tbody.children.length === 0) {
-                // Usar la primera fila como base
-                addButton.click();
-            } else {
-                addButton.click();
-            }
-            
-            const row = tbody.children[index];
-            if (row) {
-                fields.forEach(field => {
-                    const input = row.querySelector(`[name*="[${field}]"]`);
-                    if (input && rowData[field] !== undefined) {
-                        if (input.type === 'checkbox') {
-                            input.checked = rowData[field];
-                        } else {
-                            input.value = rowData[field];
-                        }
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-            }
-        });
-    }
-
-    // 🔄 INICIALIZAR AUTO-GUARDADO
-    initAutoSave() {
-        // Crear indicador de guardado
-        this.createSaveIndicator();
-        
-        // Guardar cada 30 segundos
-        setInterval(() => {
-            this.saveDraft();
-        }, 30000);
-        
-        // Guardar al cambiar cualquier campo
-        document.addEventListener('input', () => {
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-                this.saveDraft();
-            }, 3000);
-        });
-        
-        // Guardar al cambiar selects
-        document.addEventListener('change', () => {
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-                this.saveDraft();
-            }, 1000);
-        });
-        
-        // Guardar antes de cerrar la ventana
-        window.addEventListener('beforeunload', () => {
-            this.saveDraft();
-        });
-    }
-
-    // 📍 CREAR INDICADOR DE GUARDADO
-    createSaveIndicator() {
-        const indicator = document.createElement('div');
-        indicator.id = 'save-indicator';
-        indicator.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 9999;
-            display: none;
-        `;
-        document.body.appendChild(indicator);
-    }
-
-    // 🔄 ACTUALIZAR INDICADOR
-    updateSaveIndicator(message) {
-        const indicator = document.getElementById('save-indicator');
-        if (indicator) {
-            indicator.textContent = message;
-            indicator.style.display = 'block';
-            
-            setTimeout(() => {
-                indicator.style.display = 'none';
-            }, 2000);
-        }
-    }
-
-    // 🔔 MOSTRAR NOTIFICACIÓN DE BORRADOR ENCONTRADO
-    showDraftNotification() {
-        const drafts = this.getAllDrafts();
-        if (drafts.length > 0) {
-            const latestDraft = drafts[0];
-            const date = new Date(latestDraft.timestamp);
-            
-            Swal.fire({
-                icon: 'question',
-                title: '📋 Borrador encontrado',
-                html: `
-                    <p>Se encontró un borrador de acta guardado automáticamente.</p>
-                    <p><strong>Fecha:</strong> ${date.toLocaleString()}</p>
-                    <p>¿Deseas recuperar los datos guardados?</p>
-                `,
-                showCancelButton: true,
-                confirmButtonText: '✅ Recuperar datos',
-                cancelButtonText: '🗑️ Empezar nuevo',
-                allowOutsideClick: false
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    this.loadDraft(latestDraft.data);
-                    this.updateSaveIndicator('📋 Borrador recuperado');
-                } else {
-                    this.clearAllDrafts();
-                    this.storageKey = 'acta_draft_' + Date.now();
-                }
-            });
-        }
-    }
-
-    // 🗑️ LIMPIAR BORRADORES
-    clearAllDrafts() {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('acta_draft_')) {
-                keys.push(key);
-            }
-        }
-        keys.forEach(key => localStorage.removeItem(key));
-    }
-
-    // 🎯 LIMPIAR BORRADOR ACTUAL (al enviar formulario)
-    clearCurrentDraft() {
-        localStorage.removeItem(this.storageKey);
-    }
-}
-
-// 🚀 INICIALIZAR AUTO-GUARDADO CUANDO EL DOM ESTÉ LISTO
-document.addEventListener('DOMContentLoaded', () => {
-    // Esperar un poco para que otros scripts se inicialicen
     setTimeout(() => {
-        window.autoGuardado = new AutoGuardado();
-    }, 1000);
-    
-    // Limpiar borrador al enviar el formulario exitosamente
-    const form = document.getElementById('actaForm');
-    form?.addEventListener('submit', () => {
-        // Limpiar después de un delay para asegurar que el envío fue exitoso
-        setTimeout(() => {
-            if (window.autoGuardado) {
-                window.autoGuardado.clearCurrentDraft();
-            }
-        }, 2000);
-    });
+        actualizarSelectsDeResponsables();
+        console.log('✅ Sistema inicializado correctamente');
+    }, 500);
 });
 </script>
+
 </body>
 </html>
 @endsection

@@ -17,6 +17,8 @@ Route::get('/', function () {
 
 Auth::routes();
 
+Route::redirect('/', '/login');
+
 Route::middleware('auth')->group(function () {
     
     // DASHBOARD - Página principal después del login
