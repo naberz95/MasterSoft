@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<!DOCTYPE html>
-<html lang="es">
-<head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Acta</title>
@@ -92,7 +90,7 @@
         }
     </style>
 
-</head>
+
 <body>
 <div class="container py-4">
     @if ($errors->any())
@@ -889,7 +887,511 @@ const logoPlaceholder = "{{ asset('images/logo-placeholder.png') }}";
 let signaturePad; // Para el modal principal (si existe)
 let signaturePadPersona = null; // Para el modal de persona
 
-// ✅ FUNCIONES GLOBALES PARA RESPONSABLES
+// 💾 AUTO-GUARDADO LOCAL - IMPLEMENTACIÓN ÚNICA Y COMPLETA
+class AutoGuardado {
+    constructor() {
+        this.storageKey = 'acta_draft_' + Date.now();
+        this.saveTimeout = null;
+        this.createSaveIndicator();
+        this.editors = {}; // Referencia a los editores CKEditor
+        this.editorsReady = false; // Flag para saber si los editores están listos
+        this.pendingDraftLoad = null; // Borrador pendiente de cargar
+        
+        this.loadExistingDraft();
+    }
+
+    // 🔍 BUSCAR BORRADORES EXISTENTES
+    loadExistingDraft() {
+        const drafts = this.getAllDrafts();
+        if (drafts.length > 0) {
+            this.pendingDraftLoad = drafts[0];
+            setTimeout(() => {
+                if (this.editorsReady) {
+                    this.showDraftNotification();
+                }
+            }, 3000);
+        }
+    }
+
+    // ✅ MARCAR EDITORES COMO LISTOS E INICIAR AUTO-GUARDADO
+    setEditorsReady() {
+        this.editorsReady = true;
+        this.initAutoSave();
+        
+        if (this.pendingDraftLoad) {
+            this.showDraftNotification();
+            this.pendingDraftLoad = null;
+        }
+        
+        console.log('📝 Editores listos, auto-guardado activado');
+    }
+
+    // 📝 OBTENER TODOS LOS BORRADORES
+    getAllDrafts() {
+        const drafts = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('acta_draft_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    if (data && data.timestamp) {
+                        drafts.push({
+                            key: key,
+                            data: data,
+                            timestamp: data.timestamp
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Borrador corrupto encontrado:', key);
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+        
+        return drafts.sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    // ⚡ INICIALIZAR AUTO-GUARDADO
+    initAutoSave() {
+        if (!this.editorsReady) return;
+        
+        setInterval(() => {
+            this.saveDraft();
+        }, 30000);
+        
+        document.addEventListener('input', (e) => {
+            if (e.target.closest('#actaForm')) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => {
+                    this.saveDraft();
+                }, 3000);
+            }
+        });
+        
+        document.addEventListener('change', (e) => {
+            if (e.target.closest('#actaForm')) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => {
+                    this.saveDraft();
+                }, 1000);
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            this.saveDraft();
+        });
+        
+        console.log('🚀 Auto-guardado inicializado');
+    }
+
+    // 💾 GUARDAR BORRADOR
+    saveDraft() {
+        if (!this.editorsReady) {
+            console.log('⏳ Editores no listos, postponiendo guardado');
+            return;
+        }
+        
+        try {
+            const formData = this.getFormData();
+            if (this.hasValidData(formData)) {
+                formData.timestamp = Date.now();
+                formData.url = window.location.href;
+                
+                localStorage.setItem(this.storageKey, JSON.stringify(formData));
+                this.updateSaveIndicator('✅ Guardado automático');
+                console.log('📋 Borrador guardado:', this.storageKey);
+            }
+        } catch (e) {
+            console.warn('Error guardando borrador:', e);
+            this.updateSaveIndicator('⚠️ Error al guardar');
+        }
+    }
+
+    // ✅ VERIFICAR SI HAY DATOS VÁLIDOS PARA GUARDAR
+    hasValidData(data) {
+        return data.tipo_id || data.fecha || data.lugar || data.empresa_id || 
+               data.objetivo || data.desarrollo || data.asistentes?.length > 0;
+    }
+
+    // 📋 RECOPILAR DATOS DEL FORMULARIO
+    getFormData() {
+        const form = document.getElementById('actaForm');
+        if (!form) return {};
+
+        const data = {
+            tipo_id: this.getFieldValue('tipo_id'),
+            fecha: this.getFieldValue('fecha'),
+            hora_inicio: this.getFieldValue('hora_inicio'),
+            hora_fin: this.getFieldValue('hora_fin'),
+            lugar: this.getFieldValue('lugar'),
+            ciudad_id: this.getFieldValue('ciudad_id'),
+            empresa_id: this.getFieldValue('empresa_id'),
+            facturable: this.getFieldValue('facturable'),
+            proyecto_id: this.getFieldValue('proyecto_id'),
+            
+            objetivo: this.getEditorContent('objetivo'),
+            agenda: this.getEditorContent('agenda'),
+            desarrollo: this.getEditorContent('desarrollo'),
+            conclusiones: this.getEditorContent('conclusiones'),
+            
+            define_proxima_reunion: this.getFieldValue('define_proxima_reunion'),
+            proxima_reunion: this.getFieldValue('proxima_reunion'),
+            
+            asistentes: this.getTableData('#asistentes-body', ['iniciales', 'persona_id', 'cargo', 'empresa_id', 'asistio']),
+            compromisos: this.getTableData('#compromisos-table tbody', ['descripcion', 'persona_id', 'fecha', 'estado']),
+            resumen: this.getTableData('#resumen-table tbody', ['fecha', 'descripcion', 'horas', 'facturable']),
+            
+            firmante_gp_id: this.getFieldValue('select_firmante_gp'),
+            firmante_empresa_id: this.getFieldValue('select_firmante_empresa')
+        };
+
+        return data;
+    }
+
+    // 🎯 OBTENER VALOR DE CAMPO
+    getFieldValue(fieldId) {
+        const field = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId}"]`);
+        if (!field) return '';
+        
+        if (field.type === 'checkbox') {
+            return field.checked;
+        }
+        return field.value || '';
+    }
+
+    // 📝 OBTENER CONTENIDO DE EDITORES
+    getEditorContent(editorId) {
+        if (this.editors[editorId]) {
+            try {
+                return this.editors[editorId].getData();
+            } catch (e) {
+                console.warn(`Error obteniendo datos del editor ${editorId}:`, e);
+            }
+        }
+
+        if (window.editoresInicializados && window.editoresInicializados[editorId]) {
+            try {
+                return window.editoresInicializados[editorId].getData();
+            } catch (e) {
+                console.warn(`Error obteniendo datos del editor global ${editorId}:`, e);
+            }
+        }
+
+        const element = document.getElementById(editorId);
+        if (!element) return '';
+        
+        if (element.nextElementSibling && element.nextElementSibling.classList.contains('ck-editor')) {
+            const editorElement = element.nextElementSibling.querySelector('.ck-editor__editable');
+            if (editorElement) {
+                return editorElement.innerHTML;
+            }
+        }
+        
+        if (window.CKEDITOR && CKEDITOR.instances[editorId]) {
+            try {
+                return CKEDITOR.instances[editorId].getData();
+            } catch (e) {
+                console.warn(`Error con CKEditor 4 ${editorId}:`, e);
+            }
+        }
+        
+        return element.value || '';
+    }
+
+    // 📊 OBTENER DATOS DE TABLAS
+    getTableData(selector, fields) {
+        const tbody = document.querySelector(selector);
+        if (!tbody) return [];
+        
+        const data = [];
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            const rowData = {};
+            let hasData = false;
+            
+            fields.forEach(field => {
+                const input = row.querySelector(`[name*="[${field}]"]`);
+                if (input) {
+                    if (input.type === 'checkbox') {
+                        rowData[field] = input.checked;
+                        if (input.checked) hasData = true;
+                    } else {
+                        rowData[field] = input.value || '';
+                        if (input.value && input.value.trim()) hasData = true;
+                    }
+                }
+            });
+            
+            if (hasData) {
+                data.push(rowData);
+            }
+        });
+        
+        return data;
+    }
+
+    // 🔄 CARGAR BORRADOR
+    loadDraft(data) {
+        if (!data) return;
+        
+        try {
+            console.log('📋 Cargando borrador:', data);
+            
+            this.setFieldValue('tipo_id', data.tipo_id);
+            this.setFieldValue('fecha', data.fecha);
+            this.setFieldValue('hora_inicio', data.hora_inicio);
+            this.setFieldValue('hora_fin', data.hora_fin);
+            this.setFieldValue('lugar', data.lugar);
+            this.setFieldValue('ciudad_id', data.ciudad_id);
+            this.setFieldValue('empresa_id', data.empresa_id);
+            this.setFieldValue('facturable', data.facturable);
+            this.setFieldValue('proyecto_id', data.proyecto_id);
+            this.setFieldValue('define_proxima_reunion', data.define_proxima_reunion);
+            this.setFieldValue('proxima_reunion', data.proxima_reunion);
+            this.setFieldValue('select_firmante_gp', data.firmante_gp_id);
+            this.setFieldValue('select_firmante_empresa', data.firmante_empresa_id);
+            
+            ['empresa_id', 'proyecto_id'].forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field && field.value) {
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+            
+            setTimeout(() => {
+                this.loadTableData('asistentes', data.asistentes);
+                this.loadTableData('compromisos', data.compromisos);
+                this.loadTableData('resumen', data.resumen);
+                
+                if (typeof actualizarSelectsDeResponsables === 'function') {
+                    actualizarSelectsDeResponsables();
+                }
+                
+                setTimeout(() => {
+                    this.setEditorContent('objetivo', data.objetivo);
+                    this.setEditorContent('agenda', data.agenda);
+                    this.setEditorContent('desarrollo', data.desarrollo);
+                    this.setEditorContent('conclusiones', data.conclusiones);
+                }, 2000);
+            }, 500);
+            
+        } catch (e) {
+            console.error('Error cargando borrador:', e);
+        }
+    }
+
+    // 🎯 ESTABLECER VALOR DE CAMPO
+    setFieldValue(fieldId, value) {
+        if (!value) return;
+        
+        const field = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId}"]`);
+        if (field) {
+            if (field.type === 'checkbox') {
+                field.checked = value;
+            } else {
+                field.value = value;
+            }
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+
+    // ✏️ ESTABLECER CONTENIDO DE EDITOR
+    setEditorContent(editorId, content) {
+        if (!content) return;
+        
+        if (this.editors[editorId]) {
+            try {
+                this.editors[editorId].setData(content);
+                return;
+            } catch (e) {
+                console.warn(`Error estableciendo datos en editor registrado ${editorId}:`, e);
+            }
+        }
+
+        if (window.editoresInicializados && window.editoresInicializados[editorId]) {
+            try {
+                window.editoresInicializados[editorId].setData(content);
+                return;
+            } catch (e) {
+                console.warn(`Error estableciendo datos en editor global ${editorId}:`, e);
+            }
+        }
+
+        const element = document.getElementById(editorId);
+        if (!element) return;
+        
+        if (window.CKEDITOR && CKEDITOR.instances[editorId]) {
+            try {
+                CKEDITOR.instances[editorId].setData(content);
+                return;
+            } catch (e) {
+                console.warn(`Error con CKEditor 4 ${editorId}:`, e);
+            }
+        }
+        
+        element.value = content;
+    }
+
+    // 📊 CARGAR DATOS DE TABLA
+    loadTableData(tableType, data) {
+        if (!data || !Array.isArray(data) || data.length === 0) return;
+        
+        let tbody, addButtonId, fields;
+        
+        switch (tableType) {
+            case 'asistentes':
+                tbody = document.getElementById('asistentes-body');
+                addButtonId = 'add-asistente';
+                fields = ['iniciales', 'persona_id', 'cargo', 'empresa_id', 'asistio'];
+                break;
+            case 'compromisos':
+                tbody = document.querySelector('#compromisos-table tbody');
+                addButtonId = 'add-compromiso';
+                fields = ['descripcion', 'persona_id', 'fecha', 'estado'];
+                break;
+            case 'resumen':
+                tbody = document.querySelector('#resumen-table tbody');
+                addButtonId = 'add-resumen';
+                fields = ['fecha', 'descripcion', 'horas', 'facturable'];
+                break;
+        }
+        
+        if (!tbody) return;
+        
+        const templateRow = tbody.querySelector('tr');
+        if (!templateRow) return;
+        
+        while (tbody.children.length > 1) {
+            tbody.removeChild(tbody.lastChild);
+        }
+        
+        data.forEach((rowData, index) => {
+            let row;
+            
+            if (index === 0) {
+                row = templateRow;
+            } else {
+                const addButton = document.getElementById(addButtonId);
+                if (addButton) {
+                    addButton.click();
+                    row = tbody.children[index];
+                }
+            }
+            
+            if (row) {
+                fields.forEach(field => {
+                    const input = row.querySelector(`[name*="[${field}]"]`);
+                    if (input && rowData[field] !== undefined) {
+                        if (input.type === 'checkbox') {
+                            input.checked = rowData[field];
+                        } else {
+                            input.value = rowData[field];
+                        }
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+        });
+    }
+
+    // 📍 CREAR INDICADOR DE GUARDADO
+    createSaveIndicator() {
+        if (document.getElementById('save-indicator')) return;
+        
+        const indicator = document.createElement('div');
+        indicator.id = 'save-indicator';
+        indicator.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(indicator);
+    }
+
+    // 🔄 ACTUALIZAR INDICADOR
+    updateSaveIndicator(message) {
+        const indicator = document.getElementById('save-indicator');
+        if (indicator) {
+            indicator.textContent = message;
+            indicator.style.display = 'block';
+            
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+        }
+    }
+
+    // 🔔 MOSTRAR NOTIFICACIÓN DE BORRADOR ENCONTRADO
+    showDraftNotification() {
+        const drafts = this.getAllDrafts();
+        if (drafts.length === 0) return;
+        
+        const latestDraft = drafts[0];
+        const date = new Date(latestDraft.timestamp);
+        
+        Swal.fire({
+            icon: 'question',
+            title: '📋 Borrador encontrado',
+            html: `
+                <p>Se encontró un borrador de acta guardado automáticamente.</p>
+                <p><strong>Fecha:</strong> ${date.toLocaleString()}</p>
+                <p>¿Deseas recuperar los datos guardados?</p>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '✅ Recuperar datos',
+            cancelButtonText: '🗑️ Empezar nuevo',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.storageKey = latestDraft.key;
+                this.loadDraft(latestDraft.data);
+                this.updateSaveIndicator('📋 Borrador recuperado');
+            } else {
+                this.clearAllDrafts();
+                this.storageKey = 'acta_draft_' + Date.now();
+            }
+        });
+    }
+
+    // 🗑️ LIMPIAR TODOS LOS BORRADORES
+    clearAllDrafts() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('acta_draft_')) {
+                keys.push(key);
+            }
+        }
+        keys.forEach(key => {
+            localStorage.removeItem(key);
+        });
+    }
+
+    // 🎯 LIMPIAR BORRADOR ACTUAL
+    clearCurrentDraft() {
+        if (this.storageKey) {
+            localStorage.removeItem(this.storageKey);
+        }
+    }
+
+    // 📝 REGISTRAR EDITOR
+    registerEditor(editorId, editorInstance) {
+        this.editors[editorId] = editorInstance;
+        console.log('📝 Editor registrado:', editorId);
+    }
+}
+
+// ✅ FUNCIONES GLOBALES
 function getAsistentesNombres() {
     return [...document.querySelectorAll('.persona-select')].map(select => {
         const selected = select.selectedOptions[0];
@@ -905,7 +1407,6 @@ function getAsistentesNombres() {
 function actualizarSelectsDeResponsables() {
     const asistentes = getAsistentesNombres();
     
-    // ✅ ACTUALIZAR TODOS LOS SELECTS DE COMPROMISOS
     document.querySelectorAll('.compromiso-responsable').forEach(select => {
         const currentValue = select.value;
         select.innerHTML = '<option value="">Seleccione *</option>';
@@ -920,11 +1421,8 @@ function actualizarSelectsDeResponsables() {
             select.appendChild(option);
         });
     });
-    
-    console.log('✅ Selects de responsables actualizados:', asistentes.length, 'asistentes');
 }
 
-// 🚀 FUNCIÓN PARA ACTUALIZAR LOGO EMPRESA
 function updateLogoEmpresa(empresaId) {
     const select = document.getElementById("empresa_id");
     const logoImg = document.getElementById("logo-empresa");
@@ -935,7 +1433,7 @@ function updateLogoEmpresa(empresaId) {
     logoImg.src = logoUrl;
 }
 
-// 🖋️ FUNCIONES PARA SIGNATURE PAD PRINCIPAL
+// 🖋️ FUNCIONES PARA SIGNATURE PAD
 window.toggleFirmaMethod = () => {
     const metodo = document.getElementById("metodo-firma").value;
     document.getElementById("firma-archivo-container").style.display = metodo === "archivo" ? "block" : "none";
@@ -946,21 +1444,14 @@ window.clearSignature = () => {
     if (signaturePad) {
         signaturePad.clear();
         document.getElementById("firma_base64").value = "";
-        const estadoBtn = document.getElementById("btnEstadoFirma");
-        if (estadoBtn) {
-            estadoBtn.disabled = true;
-            estadoBtn.textContent = "✍️ Firma pendiente";
-        }
     }
 };
 
-// 🖋️ FUNCIONES ESPECÍFICAS PARA MODAL DE PERSONA
 window.toggleFirmaMethodPersona = () => {
     const metodo = document.getElementById("metodo-firma-persona").value;
     const archivoContainer = document.getElementById("firma-archivo-container-persona");
     const canvasContainer = document.getElementById("firma-canvas-container-persona");
     
-    // Ocultar ambos contenedores
     archivoContainer.style.display = 'none';
     canvasContainer.style.display = 'none';
     
@@ -984,11 +1475,6 @@ function initSignaturePadPersona() {
 
         signaturePadPersona.addEventListener('endStroke', () => {
             document.getElementById('firma_base64_persona').value = signaturePadPersona.toDataURL();
-            const btn = document.getElementById("btnEstadoFirmaPersona");
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = "✅ Firma registrada";
-            }
         });
     }
 }
@@ -997,11 +1483,6 @@ window.clearSignaturePersona = () => {
     if (signaturePadPersona) {
         signaturePadPersona.clear();
         document.getElementById("firma_base64_persona").value = "";
-        const estadoBtn = document.getElementById("btnEstadoFirmaPersona");
-        if (estadoBtn) {
-            estadoBtn.disabled = true;
-            estadoBtn.textContent = "✍️ Firma pendiente";
-        }
     }
 };
 
@@ -1021,7 +1502,7 @@ function previewFirmaPersona(event) {
     }
 }
 
-// 🎯 FUNCIONES PARA MODALES - VERSIÓN COMPLETA
+// 🎯 CONFIGURAR MODALES
 function configurarModales() {
     // Modal Tipo de Acta
     const formCrearTipoActa = document.getElementById('formCrearTipoActa');
@@ -1044,7 +1525,6 @@ function configurarModales() {
                 if (!response.ok) throw await response.json();
                 const data = await response.json();
 
-                // Actualizar select de tipos
                 const tipoSelect = document.getElementById('tipo_id');
                 const option = document.createElement('option');
                 option.value = data.id;
@@ -1052,7 +1532,6 @@ function configurarModales() {
                 option.selected = true;
                 tipoSelect.appendChild(option);
 
-                // Limpiar y cerrar modal
                 this.reset();
                 errorDiv.innerText = '';
                 
@@ -1060,7 +1539,6 @@ function configurarModales() {
                 const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
                 modal.hide();
 
-                // Mostrar éxito después de cerrar
                 setTimeout(() => {
                     Swal.fire('¡Éxito!', 'Tipo de acta creado exitosamente', 'success');
                 }, 300);
@@ -1075,10 +1553,9 @@ function configurarModales() {
         });
     }
 
-    // Modal Empresa - VERSIÓN CORREGIDA
+    // Modal Empresa - VERSIÓN CORREGIDA PARA BACKDROP
     const formCrearEmpresa = document.getElementById('formCrearEmpresa');
     if (formCrearEmpresa) {
-        // Preview del logo
         const logoInput = document.getElementById('logo_empresa');
         const logoPreview = document.getElementById('logo-preview');
         const logoPreviewContainer = document.getElementById('logo-preview-container');
@@ -1101,14 +1578,11 @@ function configurarModales() {
             e.preventDefault();
             
             const submitBtn = this.querySelector('button[type="submit"]');
-            const spinner = submitBtn.querySelector('.spinner-border');
             const errorDiv = document.getElementById('errorCrearEmpresa');
             const modalElement = document.getElementById('modalCrearEmpresa');
             const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
             
-            // Mostrar loading
             submitBtn.disabled = true;
-            if (spinner) spinner.classList.remove('d-none');
             errorDiv.innerText = '';
             
             const formData = new FormData(this);
@@ -1131,7 +1605,6 @@ function configurarModales() {
 
                 const data = await response.json();
 
-                // Actualizar todos los selects PRIMERO
                 const empresaSelect = document.getElementById('empresa_id');
                 if (empresaSelect) {
                     const option = document.createElement('option');
@@ -1143,39 +1616,27 @@ function configurarModales() {
                     updateLogoEmpresa(data.id);
                 }
 
-                const empresaPersonaSelect = document.getElementById('empresa_id_persona');
-                if (empresaPersonaSelect) {
-                    const optionPersona = document.createElement('option');
-                    optionPersona.value = data.id;
-                    optionPersona.text = data.nombre;
-                    empresaPersonaSelect.appendChild(optionPersona);
-                }
-
-                document.querySelectorAll('.empresa-select').forEach(select => {
-                    const optionAsistente = document.createElement('option');
-                    optionAsistente.value = data.id;
-                    optionAsistente.text = data.nombre;
-                    select.appendChild(optionAsistente);
-                });
-
-                // Limpiar formulario
+                // ✅ LIMPIAR FORMULARIO COMPLETAMENTE
                 this.reset();
                 if (logoPreviewContainer) logoPreviewContainer.style.display = 'none';
                 errorDiv.innerText = '';
 
-                // Cerrar modal ANTES del SweetAlert
+                // ✅ CERRAR MODAL INMEDIATAMENTE
                 modal.hide();
 
-                // ✅ FORZAR LIMPIEZA DEL BACKDROP
+                // ✅ FORZAR LIMPIEZA COMPLETA DEL BACKDROP
                 setTimeout(() => {
+                    // Eliminar todos los backdrops
                     document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
                         backdrop.remove();
                     });
                     
+                    // Restaurar el body
                     document.body.classList.remove('modal-open');
                     document.body.style.paddingRight = '';
                     document.body.style.overflow = '';
-
+                    
+                    // Mostrar éxito
                     Swal.fire({
                         icon: 'success',
                         title: '¡Éxito!',
@@ -1185,7 +1646,7 @@ function configurarModales() {
                         allowOutsideClick: true,
                         allowEscapeKey: true
                     });
-                }, 300);
+                }, 200);
 
             } catch (err) {
                 let errorText = 'Error al crear empresa.';
@@ -1197,7 +1658,7 @@ function configurarModales() {
                 }
                 
                 errorDiv.innerText = errorText;
-                
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al crear empresa',
@@ -1207,12 +1668,11 @@ function configurarModales() {
                 
             } finally {
                 submitBtn.disabled = false;
-                if (spinner) spinner.classList.add('d-none');
             }
         });
     }
 
-    // Modal Persona - VERSIÓN CORREGIDA CON FIRMAS
+    // Modal Persona - VERSIÓN CORREGIDA PARA BACKDROP
     const formCrearPersona = document.getElementById('formCrearPersona');
     if (formCrearPersona) {
         formCrearPersona.addEventListener('submit', async function(e) {
@@ -1223,11 +1683,10 @@ function configurarModales() {
             const modalElement = document.getElementById('modalCrearPersona');
             const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
-            // Mostrar loading
             submitBtn.disabled = true;
             errorDiv.innerText = '';
 
-            // Preparar datos de firma para el modal de persona
+            // ✅ MANEJAR FIRMA DIGITAL
             const metodo = document.getElementById("metodo-firma-persona")?.value;
             if (metodo === "dibujar" && signaturePadPersona && !signaturePadPersona.isEmpty()) {
                 document.getElementById("firma_base64_persona").value = signaturePadPersona.toDataURL("image/png");
@@ -1248,9 +1707,7 @@ function configurarModales() {
                 if (!response.ok) throw await response.json();
                 const data = await response.json();
 
-                console.log('✅ Persona creada:', data);
-
-                // Actualizar selects de personas en asistentes
+                // ✅ ACTUALIZAR TODOS LOS SELECTS DE PERSONAS
                 document.querySelectorAll('.persona-select').forEach(select => {
                     const option = new Option(data.nombre, data.id, false, false);
                     option.setAttribute('data-iniciales', data.iniciales || '');
@@ -1259,7 +1716,7 @@ function configurarModales() {
                     select.appendChild(option);
                 });
 
-                // Actualizar selects de firmantes
+                // ✅ ACTUALIZAR SELECTS DE FIRMANTES  
                 ['select_firmante_gp', 'select_firmante_empresa'].forEach(selectId => {
                     const select = document.getElementById(selectId);
                     if (select) {
@@ -1275,11 +1732,11 @@ function configurarModales() {
                     }
                 });
 
-                // Limpiar formulario
+                // ✅ LIMPIAR FORMULARIO COMPLETAMENTE
                 this.reset();
                 errorDiv.innerText = '';
 
-                // Limpiar signature pad específico del modal de persona
+                // ✅ LIMPIAR SIGNATURE PAD
                 if (signaturePadPersona) {
                     signaturePadPersona.clear();
                     const estadoBtn = document.getElementById("btnEstadoFirmaPersona");
@@ -1289,31 +1746,37 @@ function configurarModales() {
                     }
                 }
 
-                // Ocultar contenedores de firma
+                // ✅ OCULTAR CONTENEDORES DE FIRMA
                 document.getElementById("firma-archivo-container-persona").style.display = 'none';
                 document.getElementById("firma-canvas-container-persona").style.display = 'none';
                 document.getElementById("metodo-firma-persona").value = '';
-                
-                // Ocultar preview de firma
+
+                // ✅ OCULTAR PREVIEW DE FIRMA
                 const preview = document.getElementById('firmaPreviewPersona');
                 if (preview) preview.style.display = 'none';
 
-                // Actualizar selects de responsables
+                // ✅ ACTUALIZAR SELECTS DE RESPONSABLES
                 setTimeout(actualizarSelectsDeResponsables, 100);
 
-                // Cerrar modal
+                // ✅ CERRAR MODAL INMEDIATAMENTE
                 modal.hide();
 
-                // ✅ FORZAR LIMPIEZA DEL BACKDROP
+                // ✅ FORZAR LIMPIEZA COMPLETA DEL BACKDROP
                 setTimeout(() => {
+                    // Eliminar todos los backdrops
                     document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
                         backdrop.remove();
                     });
                     
+                    // Restaurar el body
                     document.body.classList.remove('modal-open');
                     document.body.style.paddingRight = '';
                     document.body.style.overflow = '';
-
+                    
+                    // Restaurar scroll
+                    document.documentElement.style.overflow = '';
+                    
+                    // Mostrar éxito
                     Swal.fire({
                         icon: 'success',
                         title: '¡Éxito!',
@@ -1321,9 +1784,12 @@ function configurarModales() {
                         timer: 3000,
                         showConfirmButton: true,
                         allowOutsideClick: true,
-                        allowEscapeKey: true
+                        allowEscapeKey: true,
+                        customClass: {
+                            container: 'swal-high-z-index'
+                        }
                     });
-                }, 300);
+                }, 200);
 
             } catch (err) {
                 let errorText = 'Error al crear persona.';
@@ -1354,7 +1820,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectEmpresa = document.getElementById("empresa_id");
     if (selectEmpresa) updateLogoEmpresa(selectEmpresa.value);
 
-    // 📝 Inicializar CKEditor
+    window.autoGuardado = null;
+    window.editoresInicializados = {};
+    window.totalEditores = editorFields.length;
+    window.editoresListos = 0;
+
     function initEditor(id) {
         const el = document.getElementById(id);
         if (el && !el.classList.contains('ck-editor__editable') && !el.closest('.ck-editor')) {
@@ -1362,19 +1832,41 @@ document.addEventListener("DOMContentLoaded", () => {
                 ckfinder: {
                     uploadUrl: "{{ route('ckeditor.upload') }}?_token={{ csrf_token() }}"
                 }
-            }).catch(console.error);
+            }).then(editor => {
+                window.editoresInicializados[id] = editor;
+                window.editoresListos++;
+                
+                if (window.autoGuardado) {
+                    window.autoGuardado.registerEditor(id, editor);
+                }
+                
+                if (window.editoresListos === window.totalEditores && window.autoGuardado) {
+                    setTimeout(() => {
+                        window.autoGuardado.setEditorsReady();
+                    }, 500);
+                }
+                
+            }).catch(error => {
+                console.error(`Error al inicializar CKEditor ${id}:`, error);
+                window.totalEditores--;
+            });
+        } else {
+            window.totalEditores--;
         }
     }
 
     editorFields.forEach(initEditor);
+    
     document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', e => {
             const target = e.target.getAttribute('data-bs-target')?.replace('#', '');
-            if (editorFields.includes(target)) setTimeout(() => initEditor(target), 100);
+            if (editorFields.includes(target) && !window.editoresInicializados[target]) {
+                setTimeout(() => initEditor(target), 100);
+            }
         });
     });
 
-    // 📅 Toggle fecha próxima reunión
+    // Toggle fecha próxima reunión
     const toggleFecha = () => {
         const select = document.getElementById('define_proxima_reunion');
         const container = document.getElementById('fecha_proxima_reunion_container');
@@ -1385,48 +1877,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('define_proxima_reunion')?.addEventListener('change', toggleFecha);
     toggleFecha();
 
-    // 🔒 Validación de pestañas
-    const tabButtons = document.querySelectorAll('[data-required-tab]');
-    tabButtons.forEach(btn => {
-        btn.addEventListener('show.bs.tab', function (e) {
-            const currentTab = document.querySelector('.tab-pane.active');
-            const requiredInputs = currentTab.querySelectorAll('input[required], select[required], textarea[required]');
-            let valid = true;
-
-            requiredInputs.forEach(input => {
-                if (!input.value || input.value.trim() === '') {
-                    input.classList.add('is-invalid');
-                    valid = false;
-                } else {
-                    input.classList.remove('is-invalid');
-                }
-            });
-
-            if (!valid) {
-                e.preventDefault();
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Campos incompletos',
-                    text: 'Por favor, complete todos los campos requeridos antes de continuar.',
-                    confirmButtonText: 'Entendido'
-                });
-            }
-        });
-    });
-
-    // 👥 ASISTENTES - VERSIÓN MEJORADA
+    // Asistentes
     document.getElementById("add-asistente")?.addEventListener("click", () => {
         const tableBody = document.getElementById("asistentes-body");
-        if (!tableBody || tableBody.children.length === 0) {
-            console.error('No se puede agregar asistente: tabla no encontrada o vacía');
-            return;
-        }
+        if (!tableBody || tableBody.children.length === 0) return;
         
         const index = tableBody.rows.length;
         const templateRow = tableBody.rows[0];
         const row = templateRow.cloneNode(true);
 
-        // Actualizar nombres de campos
         [...row.querySelectorAll("input, select")].forEach(el => {
             if (el.name) {
                 el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
@@ -1438,7 +1897,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tableBody.appendChild(row);
         
-        // Configurar events para nueva fila
         const personaSelect = row.querySelector(".persona-select");
         if (personaSelect) {
             personaSelect.addEventListener("change", (e) => {
@@ -1448,16 +1906,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         setTimeout(actualizarSelectsDeResponsables, 10);
-        console.log('✅ Asistente agregado, fila:', index + 1);
     });
 
-    // 📋 COMPROMISOS - VERSIÓN MEJORADA
+    // Compromisos
     document.getElementById("add-compromiso")?.addEventListener("click", () => {
         const tableBody = document.querySelector("#compromisos-table tbody");
-        if (!tableBody || tableBody.children.length === 0) {
-            console.error('No se puede agregar compromiso: tabla no encontrada o vacía');
-            return;
-        }
+        if (!tableBody || tableBody.children.length === 0) return;
         
         const index = tableBody.rows.length;
         const templateRow = tableBody.rows[0];
@@ -1478,13 +1932,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(actualizarSelectsDeResponsables, 10);
     });
 
-    // ⏰ RESUMEN
+    // Resumen
     document.getElementById("add-resumen")?.addEventListener("click", () => {
         const tableBody = document.querySelector("#resumen-table tbody");
-        if (!tableBody || tableBody.children.length === 0) {
-            console.error('No se puede agregar resumen: tabla no encontrada o vacía');
-            return;
-        }
+        if (!tableBody || tableBody.children.length === 0) return;
         
         const index = tableBody.rows.length;
         const templateRow = tableBody.rows[0];
@@ -1501,7 +1952,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tableBody.appendChild(row);
     });
 
-    // 🗑️ ELIMINAR FILAS
+    // Eliminar filas
     document.body.addEventListener("click", e => {
         if (e.target.classList.contains("remove-row")) {
             const row = e.target.closest("tr");
@@ -1514,23 +1965,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 🏢 CONFIGURAR MODALES
     configurarModales();
 
-    // 🖋️ CONFIGURAR SIGNATURE PAD PRINCIPAL (si existe)
-    const canvas = document.getElementById("signature-canvas");
-    if (canvas) {
-        signaturePad = new SignaturePad(canvas);
-        signaturePad.onEnd = () => {
-            const btn = document.getElementById("btnEstadoFirma");
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = "✅ Firma registrada";
-            }
-        };
-    }
-
-    // 👤 Auto-completar campos de asistentes
+    // Auto-completar asistentes
     function autoCompletarAsistente(event) {
         const select = event.target;
         const option = select.selectedOptions[0];
@@ -1544,8 +1981,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (iniciales) iniciales.value = option.dataset.iniciales || '';
             if (cargo) cargo.value = option.dataset.cargo || '';
             if (empresa) empresa.value = option.dataset.empresa || '';
-            
-            console.log('✅ Auto-completado:', option.textContent.trim());
         }
     }
 
@@ -1556,7 +1991,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 📊 CARGAR COMPROMISOS ANTERIORES POR PROYECTO
+    // Cargar compromisos anteriores
     const selectProyecto = document.getElementById('proyecto_id');
     const compromisosContainer = document.getElementById('compromisos-anteriores-container');
     const resumenAnteriorContainer = document.getElementById('resumen-anterior-container');
@@ -1569,7 +2004,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!proyectoId) return;
 
         try {
-            // 🔁 Compromisos anteriores
             const compromisosRes = await fetch(`/actas/${proyectoId}/ultima`);
             if (compromisosRes.ok) {
                 const compromisosData = await compromisosRes.json();
@@ -1589,7 +2023,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 🔁 Resumen cronológico anterior
             const resumenRes = await fetch(`/proyectos/${proyectoId}/resumen-cronologico`);
             if (resumenRes.ok) {
                 const resumenData = await resumenRes.json();
@@ -1616,7 +2049,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 🖋️ FIRMAS DE REPRESENTACIÓN
+    // Firmas de representación
     const updateFirmante = (selectId, fields) => {
         const select = document.getElementById(selectId);
         select?.addEventListener("change", function () {
@@ -1649,14 +2082,78 @@ document.addEventListener("DOMContentLoaded", () => {
         "firma_empresa_img": "data-firma"
     });
 
-    // ✅ INICIALIZAR SELECTS DE RESPONSABLES AL FINAL
+    // Inicializar auto-guardado
+    setTimeout(() => {
+        if (typeof Swal !== 'undefined') {
+            window.autoGuardado = new AutoGuardado();
+            
+            Object.keys(window.editoresInicializados).forEach(id => {
+                window.autoGuardado.registerEditor(id, window.editoresInicializados[id]);
+            });
+            
+            if (window.editoresListos === window.totalEditores) {
+                window.autoGuardado.setEditorsReady();
+            }
+            
+            console.log('💾 Auto-guardado inicializado');
+        }
+    }, 2000);
+
+    setTimeout(() => {
+        if (window.autoGuardado && !window.autoGuardado.editorsReady) {
+            window.autoGuardado.setEditorsReady();
+        }
+    }, 8000);
+
+    // Limpiar borrador al enviar formulario
+    const form = document.getElementById('actaForm');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            if (form.checkValidity()) {
+                setTimeout(() => {
+                    if (window.autoGuardado) {
+                        window.autoGuardado.clearCurrentDraft();
+                    }
+                }, 1000);
+            }
+        });
+    }
+
     setTimeout(() => {
         actualizarSelectsDeResponsables();
-        console.log('✅ Sistema inicializado correctamente');
     }, 500);
 });
+
+// Debugging
+window.debugAutoGuardado = {
+    mostrarBorradores: () => {
+        const drafts = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('acta_draft_')) {
+                try {
+                    drafts.push({
+                        key,
+                        data: JSON.parse(localStorage.getItem(key))
+                    });
+                } catch (e) {
+                    drafts.push({ key, error: 'Corrupto' });
+                }
+            }
+        }
+        console.table(drafts);
+    },
+    limpiarTodo: () => {
+        if (window.autoGuardado) {
+            window.autoGuardado.clearAllDrafts();
+        }
+    },
+    guardarAhora: () => {
+        if (window.autoGuardado) {
+            window.autoGuardado.saveDraft();
+        }
+    }
+};
 </script>
 
-</body>
-</html>
 @endsection
