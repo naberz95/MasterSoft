@@ -53,19 +53,19 @@
                             <!-- Fecha -->
                             <div class="col-md-6 mb-3">
                                 <label for="fecha" class="form-label">Fecha <span class="text-danger">*</span></label>
-                                <input type="date" name="fecha" id="fecha" class="form-control" value="{{ $acta->fecha }}" required>
+                                <input type="date" name="fecha" id="fecha" class="form-control" value="{{ $acta->fecha ? \Carbon\Carbon::parse($acta->fecha)->format('Y-m-d') : '' }}" required>
                             </div>
 
                             <!-- Hora Inicio -->
                             <div class="col-md-6 mb-3">
                                 <label for="hora_inicio" class="form-label">Hora Inicio <span class="text-danger">*</span></label>
-                                <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" value="{{ $acta->hora_inicio }}" required>
+                                <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" value="{{ $acta->hora_inicio ? \Carbon\Carbon::parse($acta->hora_inicio)->format('H:i') : '' }}" required>
                             </div>
 
                             <!-- Hora Fin -->
                             <div class="col-md-6 mb-3">
                                 <label for="hora_fin" class="form-label">Hora Fin <span class="text-danger">*</span></label>
-                                <input type="time" name="hora_fin" id="hora_fin" class="form-control" value="{{ $acta->hora_fin }}" required>
+                                <input type="time" name="hora_fin" id="hora_fin" class="form-control" value="{{ $acta->hora_fin ? \Carbon\Carbon::parse($acta->hora_fin)->format('H:i') : '' }}" required>
                             </div>
 
                             <!-- Lugar -->
@@ -291,7 +291,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <input type="date" name="compromisos[{{ $i }}][fecha]" class="form-control" value="{{ $compromiso->fecha }}">
+                                    <input type="date" name="compromisos[{{ $i }}][fecha]" class="form-control" value="{{ $compromiso->fecha ? \Carbon\Carbon::parse($compromiso->fecha)->format('Y-m-d') : '' }}" >
                                 </div>
                                 <div class="col-md-1">
                                     <select name="compromisos[{{ $i }}][estado]" class="form-select">
@@ -327,7 +327,7 @@
                             <div class="row resumen-row mb-3">
                                 <input type="hidden" name="resumenes[{{ $i }}][id]" value="{{ $resumen->id }}">
                                 <div class="col-md-2">
-                                    <input type="date" name="resumenes[{{ $i }}][fecha]" class="form-control" value="{{ $resumen->fecha }}">
+                                    <input type="date" name="resumenes[{{ $i }}][fecha]" class="form-control" value="{{ $resumen->fecha ? \Carbon\Carbon::parse($resumen->fecha)->format('Y-m-d') : '' }}" required>
                                 </div>
                                 <div class="col-md-5">
                                     <textarea name="resumenes[{{ $i }}][descripcion]" class="form-control" rows="2">{{ $resumen->descripcion }}</textarea>
@@ -379,8 +379,9 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <input type="date" name="proxima_reunion" id="proxima_reunion" class="form-control" 
-                                       value="{{ $acta->proxima_reunion }}" {{ !$acta->proxima_reunion ? 'disabled' : '' }}>
+                                <input type="date" name="proxima_reunion" id="proxima_reunion" class="form-control"
+                                    value="{{ $acta->proxima_reunion ? \Carbon\Carbon::parse($acta->proxima_reunion)->format('Y-m-d') : '' }}"
+                                    {{ !$acta->proxima_reunion ? 'disabled' : '' }}>
                             </div>
                         </div>
                     </div>
