@@ -18,6 +18,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use App\Models\version;
 
+Carbon::setLocale('es');
+
 class ActaController extends Controller
 {
     public function index(Request $request)

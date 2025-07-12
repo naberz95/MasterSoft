@@ -183,20 +183,22 @@
 <div class="section-title">Datos Básicos</div>
 <table class="acta">
     <tr>
-        <th colspan="1">TIPO</th>
-        <td><span class="checkbox">{{ $acta->tipoActa->nombre == 'Inicial' ? 'X' : ' ' }}</span> INICIAL</td>
-        <td><span class="checkbox">{{ $acta->tipoActa->nombre == 'Seguimiento' ? 'X' : ' ' }}</span> SEGUIMIENTO</td>
-        <td><span class="checkbox">{{ $acta->tipoActa->nombre == 'Cambio' ? 'X' : ' ' }}</span> CAMBIO</td>
-        <td><span class="checkbox">{{ $acta->tipoActa->nombre == 'Final' ? 'X' : ' ' }}</span> FINAL</td>
-        <th colspan="1">NÚMERO</th>
-        <td colspan="2">{{ $acta->numero }}</td>
-    </tr>
-    <tr>
+        <th>TIPO</th>
+        <td>
+            {{ $acta->tipoActa->nombre ?? '-' }}
+        </td>
+        <th>NÚMERO</th>
+        <td>
+            {{ $acta->numero }}
+        </td>
         <th>FECHA</th>
-        <td colspan="4">{{ $acta->fecha }}</td>
+        <td>
+            {{ \Carbon\Carbon::parse($acta->fecha)->translatedFormat('l d \d\e F \d\e Y') }}
+        </td>
         <th>HORA I/F</th>
-        <td>{{ $acta->hora_inicio }}</td>
-        <td>{{ $acta->hora_fin }}</td>
+        <td>
+            {{ \Carbon\Carbon::parse($acta->hora_inicio)->format('H:i') }} / {{ \Carbon\Carbon::parse($acta->hora_fin)->format('H:i') }}
+        </td>
     </tr>
     <tr>
         <th>LUGAR</th>
@@ -213,8 +215,13 @@
         <th>FACTURABLE</th>
         <td>
             Orden de Servicio
-            <span class="checkbox">{{ $acta->facturable ? 'X' : ' ' }}</span> SI 
-            <span class="checkbox">{{ !$acta->facturable ? 'X' : ' ' }}</span> NO
+            <br><br>
+            <span style="margin-right: 15px;">
+                <span class="checkbox">{{ $acta->facturable ? 'X' : ' ' }}</span> SI
+            </span>
+            <span>
+                <span class="checkbox">{{ !$acta->facturable ? 'X' : ' ' }}</span> NO
+            </span>
         </td>
     </tr>
     <tr>
@@ -222,7 +229,6 @@
         <td colspan="7">{{ $acta->proyecto->nombre ?? '' }}</td>
     </tr>
 </table>
-
 <!-- ASISTENTES -->
 <div class="section-title">ASISTENTES / INVITADOS</div>
 <table>
@@ -250,35 +256,48 @@
 
 <!-- OBJETIVO / AGENDA -->
 <div class="section-title">OBJETIVO / ASUNTO / AGENDA</div>
-<table>
+
+<table class="table table-bordered" style="width:100%; border-collapse: collapse; border: 1px solid #000;">
+
     <tr>
-        <th><strong>1. Desarrollo de la reunión</strong></th>
-        <td class="ck-content">{!! $acta->objetivo !!}</td>
+        <td class="ck-content">
+            <strong>1. Desarrollo de la reunión:<strong><br>
+            {!! $acta->objetivo !!}
+        </td>
     </tr>
     <tr>
-        <th><strong>2. Programación de actividades</strong></th>
-        <td class="ck-content">{!! $acta->agenda !!}</td>
+        <td class="ck-content">
+            <strong>2. Programación de actividades:<strong><br>
+            {!! $acta->agenda ?? 'N/A' !!}
+        </td>
     </tr>
     <tr>
-        <th><strong>3. Próxima reunión:</strong></th>
         <td>
+            <strong>3. Próxima reunión:</strong><br>
             {{ $acta->proxima_reunion ? \Carbon\Carbon::parse($acta->proxima_reunion)->format('Y-m-d') : 'N/A' }}
         </td>
     </tr>
 </table>
 
+
 <!-- DESARROLLO Y CONCLUSIONES -->
 <div class="section-title">DESARROLLO Y CONCLUSIONES</div>
-<table>
+
+<table class="table table-bordered" style="width:100%; border-collapse: collapse; border: 1px solid #000;">
     <tr>
-        <th style="width: 20%;"><strong>1. Desarrollo:</strong></th>
-        <td class="ck-content">{!! $acta->desarrollo !!}</td>
+        <td class="ck-content">
+            <strong>1. Desarrollo:</strong><br>
+            {!! $acta->desarrollo !!}
+        </td>
     </tr>
     <tr>
-        <th><strong>2. Conclusiones:</strong></th>
-        <td class="ck-content">{!! $acta->conclusiones !!}</td>
+        <td class="ck-content">
+            <strong>2. Conclusiones:</strong><br>
+            {!! $acta->conclusiones !!}
+        </td>
     </tr>
 </table>
+
 
 <div class="section-title">COMPROMISOS</div>
 <table>
