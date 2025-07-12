@@ -97,7 +97,7 @@ class ActaController extends Controller
                     'id' => $c->id,
                     'descripcion' => $c->descripcion,
                     'responsable' => $c->actaPersona->persona->nombre ?? 'Sin asignar',
-                    'fecha' => $c->fecha,
+                    'fecha' => $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('Y-m-d') : null,
                     'estado' => $c->estado
                 ];
             })

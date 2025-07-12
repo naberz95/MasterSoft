@@ -3,94 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <title>Acta #{{ $acta->numero }}</title>
-<!-- filepath: resources/views/actas/pdf.blade.php -->
+
 <style>
     body { 
         font-family: Arial, sans-serif; 
         font-size: 12px; 
         margin: 20px; 
     }
-    
+
     table { 
         width: 100%; 
         border-collapse: collapse; 
+        table-layout: fixed; /* ✅ Importante para evitar desbordes */
     }
-    
+
     th, td { 
-        border: 1px solid #333; 
+        border: 1px solid #99bcd6; /* ✅ Borde más suave y profesional */
         padding: 6px; 
         vertical-align: top; 
+        word-wrap: break-word;
+        overflow: hidden;
     }
-    
-    /* ✅ ESTILOS ESPECÍFICOS PARA LA TABLA DEL ENCABEZADO */
+
+    /* ✅ TABLA DE ENCABEZADO */
     .header-table { 
         width: 100%; 
         border-collapse: collapse; 
         margin-bottom: 20px;
-        table-layout: fixed; /* ✅ FORZAR DISTRIBUCIÓN FIJA */
+        table-layout: fixed;
     }
-    
-    /* ✅ DISTRIBUCIÓN PROPORCIONAL DE COLUMNAS 33.33% CADA UNA */
+
     .header-table td:nth-child(1),
     .header-table td:nth-child(2),
     .header-table td:nth-child(3) {
         width: 33.33%;
     }
-    
+
     .header-table td { 
         text-align: center; 
-        border: 1px solid #000;
+        border: 1px solid #99bcd6;
         padding: 8px;
         vertical-align: middle;
         font-size: 11px;
         font-weight: bold;
-        overflow: hidden; /* ✅ EVITAR DESBORDAMIENTO */
+        overflow: hidden;
     }
-    
+
     .header-table tr:first-child td {
-        height: 80px; /* Altura para los logos */
+        height: 80px;
     }
-    
+
     .header-table tr:last-child td {
-        height: 30px; /* Altura para texto de código/vigencia/versión */
+        height: 30px;
         font-size: 10px;
     }
-    
-    /* ✅ ESTILOS ESPECÍFICOS PARA LOGOS EN EL ENCABEZADO */
+
     .header-table .logo { 
-        max-height: 50px; /* ✅ ALTURA REDUCIDA */
-        max-width: 90%; /* ✅ ANCHO MÁXIMO PROPORCIONAL */
-        object-fit: contain; /* ✅ MANTENER PROPORCIÓN */
+        max-height: 50px;
+        max-width: 90%;
+        object-fit: contain;
         display: block;
-        margin: 0 auto; /* ✅ CENTRAR HORIZONTALMENTE */
+        margin: 0 auto;
     }
-    
-    /* ✅ LOGO GENERAL (OTROS USOS) */
+
     .logo { 
         max-height: 60px; 
         max-width: 100%;
     }
-    
+
     h2 { 
         margin: 0; 
         font-size: 18px;
         font-weight: bold;
     }
-    
+
     .section-title {
-        background-color: #f0f0f0; 
-        font-weight: bold; 
+        background-color: #f0f0f0;
+        font-weight: bold;
         padding: 5px;
-        margin-top: 20px; 
+        margin-top: 20px;
         margin-bottom: 5px;
         font-size: 14px;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
     }
-    
+
     .ck-content img {
         max-width: 100%;
         height: auto;
@@ -99,51 +99,79 @@
         margin: 10px auto;
     }
 
-    /* ✅ ESTILOS ESPECÍFICOS PARA LA TABLA DE ACTA */
+    /* ✅ ESTILOS PARA LA TABLA DE ACTA */
     table.acta {
         width: 100%;
         border-collapse: collapse;
         font-size: 11px;
+        table-layout: fixed;
     }
-    
+
     table.acta th,
     table.acta td {
         border: 1px solid #000;
-        padding: 4px;
+        padding: 4px 6px;
         vertical-align: middle;
         text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    
+
     table.acta th {
         background-color: #e6e6e6;
         font-weight: bold;
         font-size: 10px;
         text-align: center;
-        width: auto;
     }
-    
-    /* ✅ ESTILOS PARA LOS CHECKBOXES */
-    .checkbox {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border: 1px solid #000;
-        text-align: center;
-        line-height: 10px;
-        font-size: 9px;
+
+    /* ✅ CHECKBOXES PARA FACTURABLE */
+.checkbox {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #000;
+    text-align: center;
+    line-height: 16px;
+    font-weight: bold;
+    font-size: 12px;
+    margin: 0 auto 2px auto;
+}
+
+
+
+
+
+    /* ✅ NÚMERO EN ESQUINA SUPERIOR DERECHA */
+    .numero-acta {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
         font-weight: bold;
-        margin-right: 5px;
-        background-color: white;
+        font-size: 12px;
+        margin-bottom: 10px;
     }
-    
-    /* ✅ ESTILOS PARA OTRAS TABLAS */
+
+    .numero-acta span {
+        color: #007bff;
+    }
+
+    /* ✅ OTRAS TABLAS (opcional) */
     table:not(.acta):not(.header-table) th {
         background-color: #f0f0f0;
         font-weight: bold;
         text-align: left;
         font-size: 12px;
     }
+    .facturable-label {
+    min-width: 80px;
+    white-space: normal;
+}
+
 </style>
+
+
+
 </head>
 <body>
 
@@ -181,54 +209,57 @@
 
 <!-- DATOS BÁSICOS -->
 <div class="section-title">Datos Básicos</div>
+<div style="text-align: right; font-weight: bold; font-size: 13px; margin-bottom: 5px;">
+    NÚMERO: <span style="color: #007bff;">{{ $acta->numero }}</span>
+</div>
 <table class="acta">
-    <tr>
-        <th>TIPO</th>
-        <td>
-            {{ $acta->tipoActa->nombre ?? '-' }}
-        </td>
-        <th>NÚMERO</th>
-        <td>
-            {{ $acta->numero }}
-        </td>
-        <th>FECHA</th>
-        <td>
-            {{ \Carbon\Carbon::parse($acta->fecha)->translatedFormat('l d \d\e F \d\e Y') }}
-        </td>
-        <th>HORA I/F</th>
-        <td>
-            {{ \Carbon\Carbon::parse($acta->hora_inicio)->format('H:i') }} / {{ \Carbon\Carbon::parse($acta->hora_fin)->format('H:i') }}
-        </td>
-    </tr>
+<tr>
+    <th>TIPO</th>
+    <td style="width: 15%;">{{ $acta->tipoActa->nombre ?? '-' }}</td>
+
+    <th>FECHA</th>
+    <td colspan="3" style="width: 32%;">{{ \Carbon\Carbon::parse($acta->fecha)->translatedFormat('l, d \d\e F \d\e Y') }}</td>
+
+    <th>INICIO</th>
+    <td style="width: 10%;">{{ \Carbon\Carbon::parse($acta->hora_inicio)->format('H:i') }}</td>
+
+    <th>FINAL</th>
+    <td style="width: 10%;">{{ \Carbon\Carbon::parse($acta->hora_fin)->format('H:i') }}</td>
+</tr>
+
+
     <tr>
         <th>LUGAR</th>
-        <td colspan="5">{{ $acta->lugar }}</td>
-        <th>CIUDAD/P</th>
-        <td>{{ $acta->ciudad->nombre ?? '' }} / {{ $acta->ciudad->pais->nombre ?? '' }}</td>
+        <td colspan="4">{{ $acta->lugar }}</td>
+
+        <th colspan="2">CIUDAD/PAÍS</th>
+        <td colspan="3">{{ $acta->ciudad->nombre ?? '' }} / {{ $acta->ciudad->pais->nombre ?? '' }}</td>
     </tr>
-    <tr>
-        <th>CLIENTE</th>
-        <td colspan="5">
-            {{ $acta->empresa->nombre ?? '' }} – 
-            NIT: {{ $acta->empresa->nit ?? '' }}
+
+    <tr> 
+        <th style="width: 10%;">CLIENTE NIT</th>
+        <td style="width: 10%;">{{ $acta->empresa->nit ?? '' }}</td>
+
+        <td colspan="4" style="width: 40%;">{{ $acta->empresa->nombre ?? '' }}</td>
+
+        <th colspan="2" style="width: 20%;">FACTURABLE</th>
+
+        <td style="width: 10%; text-align: center; vertical-align: middle; font-weight: {{ $acta->facturable ? 'bold' : 'normal' }};">
+            {{ $acta->facturable ? 'X SI' : 'SI' }}
         </td>
-        <th>FACTURABLE</th>
-        <td>
-            Orden de Servicio
-            <br><br>
-            <span style="margin-right: 15px;">
-                <span class="checkbox">{{ $acta->facturable ? 'X' : ' ' }}</span> SI
-            </span>
-            <span>
-                <span class="checkbox">{{ !$acta->facturable ? 'X' : ' ' }}</span> NO
-            </span>
+
+        <td style="width: 10%; text-align: center; vertical-align: middle; font-weight: {{ !$acta->facturable ? 'bold' : 'normal' }};">
+            {{ !$acta->facturable ? 'X NO' : 'NO' }}
         </td>
     </tr>
+
+
     <tr>
         <th>PROYECTO</th>
-        <td colspan="7">{{ $acta->proyecto->nombre ?? '' }}</td>
+        <td colspan="9">{{ $acta->proyecto->nombre ?? '' }}</td>
     </tr>
 </table>
+
 <!-- ASISTENTES -->
 <div class="section-title">ASISTENTES / INVITADOS</div>
 <table>
